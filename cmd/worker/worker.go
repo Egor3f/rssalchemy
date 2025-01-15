@@ -1,0 +1,88 @@
+package main
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"github.com/egor3f/rssalchemy/internal/adapters/natsadapter"
+	"github.com/egor3f/rssalchemy/internal/extractors/pwextractor"
+	"github.com/egor3f/rssalchemy/internal/models"
+	"github.com/ilyakaznacheev/cleanenv"
+	"github.com/labstack/gommon/log"
+	"github.com/nats-io/nats.go"
+	"os"
+	"os/signal"
+)
+
+type Config struct {
+	NatsUrl string `yaml:"nats_url" env:"NATS_URL" env-required:"true"`
+	Debug   bool   `yaml:"debug" env:"DEBUG"`
+}
+
+func main() {
+	var cfg Config
+	err := cleanenv.ReadConfig("config.yml", &cfg)
+	if err != nil {
+		log.Panicf("reading config failed: %w", err)
+	}
+
+	if cfg.Debug {
+		log.SetLevel(log.DEBUG)
+		log.SetHeader(`${time_rfc3339_nano} ${level}`)
+	}
+
+	defer func() {
+		log.Infof("worker gracefully stopped")
+	}()
+
+	baseCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+
+	natsc, err := nats.Connect(cfg.NatsUrl)
+	if err != nil {
+		log.Panicf("nats connect failed: %v", err)
+	}
+	defer func() {
+		if err := natsc.Drain(); err != nil {
+			log.Errorf("nats drain failed: %v", err)
+		}
+	}()
+
+	qc, err := natsadapter.New(natsc)
+	if err != nil {
+		log.Panicf("create nats adapter: %v", err)
+	}
+
+	pwe, err := pwextractor.New()
+	if err != nil {
+		log.Panicf("create pw extractor: %v", err)
+	}
+	defer func() {
+		if err := pwe.Stop(); err != nil {
+			log.Errorf("stop pw extractor: %v", err)
+		}
+	}()
+
+	err = qc.ConsumeQueue(baseCtx, func(taskPayload []byte) (cacheKey string, resultPayoad []byte, errRet error) {
+		var task models.Task
+		if err := json.Unmarshal(taskPayload, &task); err != nil {
+			errRet = fmt.Errorf("unmarshal task: %w", err)
+			return
+		}
+		cacheKey = task.CacheKey()
+		result, err := pwe.Extract(task)
+		if err != nil {
+			errRet = fmt.Errorf("extract: %w", err)
+			return
+		}
+		resultPayoad, err = json.Marshal(result)
+		if err != nil {
+			errRet = fmt.Errorf("marshal result: %w", err)
+			return
+		}
+		return
+	})
+	if err != nil {
+		log.Panicf("consume queue: %v", err)
+	}
+}
