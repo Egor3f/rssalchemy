@@ -11,7 +11,7 @@ type CachedWorkQueue interface {
 		cacheLifetime time.Duration,
 		cacheKey string,
 		taskPayload []byte,
-	) ([]byte, error)
+	) (result []byte, err error)
 }
 
 type QueueConsumer interface {
