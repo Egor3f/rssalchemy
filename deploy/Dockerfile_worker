@@ -1,0 +1,30 @@
+# todo: multi-stage build
+# todo: let playwright install all deps by itself
+
+FROM golang:1.23
+
+RUN apt-get update && apt-get install -y ca-certificates tzdata libasound2 libatk-bridge2.0-0 libatk1.0-0 \
+    libatspi2.0-0 libcairo2 libcups2 libdbus-1-3 libdrm2 libgbm1 libglib2.0-0 libnspr4 libnss3 \
+    libpango-1.0-0 libx11-6 libxcb1 libxcomposite1 libxdamage1 libxext6 libxfixes3 libxkbcommon0 \
+    libxrandr2 xvfb fonts-noto-color-emoji fonts-unifont libfontconfig1 libfreetype6 xfonts-scalable \
+    fonts-liberation fonts-ipafont-gothic fonts-wqy-zenhei fonts-tlwg-loma-otf fonts-freefont-ttf && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN useradd -ms /bin/bash pwuser
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+RUN PWGO_VER=$(grep -oE "playwright-go v\S+" go.mod | sed 's/playwright-go //g') \
+    && go install github.com/playwright-community/playwright-go/cmd/playwright@${PWGO_VER}
+RUN playwright install --with-deps chromium chromium-headless-shell && \
+    mkdir /home/pwuser/.cache && \
+    mv /root/.cache/ms-playwright* /home/pwuser/.cache/ && \
+    chown -R pwuser:pwuser /home/pwuser/.cache && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY . .
+RUN go build -o bin/worker github.com/egor3f/rssalchemy/cmd/worker
+
+CMD ["/app/bin/worker"]

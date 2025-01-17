@@ -1,0 +1,29 @@
+services:
+  webserver:
+    build:
+      context: ../
+      dockerfile: deploy/Dockerfile_webserver
+    env_file: .env
+    depends_on:
+      - nats
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ../
+      dockerfile: deploy/Dockerfile_worker
+    env_file: .env
+    depends_on:
+      - nats
+    ipc: host
+    user: pwuser
+    security_opt:
+      - seccomp:seccomp_profile.json
+    restart: unless-stopped
+
+  nats:
+    image: nats:2.10
+    command: "-js"
+    restart: unless-stopped

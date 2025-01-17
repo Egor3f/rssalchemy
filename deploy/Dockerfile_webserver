@@ -1,0 +1,15 @@
+# todo: multi-stage build
+# todo: embed frontend to binary
+
+FROM golang:1.23
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+RUN go build -o bin/webserver github.com/egor3f/rssalchemy/cmd/webserver
+
+EXPOSE 8080
+CMD ["/app/bin/webserver"]
