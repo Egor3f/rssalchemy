@@ -1,14 +1,21 @@
 package pwextractor
 
 import (
+	_ "embed"
 	"fmt"
 	"github.com/egor3f/rssalchemy/internal/models"
 	"github.com/labstack/gommon/log"
 	"github.com/markusmobius/go-dateparser"
 	"github.com/playwright-community/playwright-go"
-	"net/url"
-	"strings"
-	"time"
+)
+
+// Timeouts
+var (
+	defTimeout    = "100ms"
+	defOptInText  = playwright.LocatorInnerTextOptions{Timeout: pwDuration(defTimeout)}
+	defOptTextCon = playwright.LocatorTextContentOptions{Timeout: pwDuration(defTimeout)}
+	defOptAttr    = playwright.LocatorGetAttributeOptions{Timeout: pwDuration(defTimeout)}
+	defOptEval    = playwright.LocatorEvaluateOptions{Timeout: pwDuration(defTimeout)}
 )
 
 type PwExtractor struct {
@@ -69,30 +76,71 @@ func (e *PwExtractor) Extract(task models.Task) (result *models.TaskResult, errR
 		log.Warnf("waiting for page load: %v", err)
 	}
 
-	result = &models.TaskResult{}
+	parser := pageParser{
+		task: task,
+		page: page,
+	}
 
-	result.Title, err = page.Title()
+	result, err = parser.parse()
+	if err != nil {
+		return nil, fmt.Errorf("parse page: %w", err)
+	}
+	if len(result.Items) == 0 {
+		return nil, fmt.Errorf("extract failed for all posts")
+	}
+
+	return result, nil
+}
+
+type pageParser struct {
+	task models.Task
+	page playwright.Page
+
+	// next fields only for debugging. Shit code, to do better later
+	postIdx  int
+	fieldIdx int
+}
+
+// must accepts arbitrary string and error and returns just string, also logs everything.
+// it is used for playwright functons that return both string and error to avoid boilerplate.
+// fieldIdx is convinient variable used only for logging purposes, looks like shit, maybe i'll do it better later.
+func (p *pageParser) must(s string, err error) string {
+	p.fieldIdx++
+	if err != nil {
+		log.Errorf("extract post field %d: %v", p.fieldIdx, err)
+		return ""
+	}
+	//log.Debugf("field=%d res=%.100s", p.fieldIdx, s)
+	return s
+}
+
+func (p *pageParser) parse() (*models.TaskResult, error) {
+	var result models.TaskResult
+	var err error
+
+	result.Title, err = p.page.Title()
 	if err != nil {
 		return nil, fmt.Errorf("page title: %w", err)
 	}
 
-	iconUrl, err := page.Locator("link[rel=apple-touch-icon]").First().
+	iconUrl, err := p.page.Locator("link[rel=apple-touch-icon]").First().
 		GetAttribute("href", playwright.LocatorGetAttributeOptions{Timeout: pwDuration("100ms")})
 	if err != nil {
 		log.Warnf("page icon url: %v", err)
 	} else {
-		result.Icon = absUrl(iconUrl, page)
+		result.Icon = absUrl(iconUrl, p.page)
 	}
 
-	posts, err := page.Locator(task.SelectorPost).All()
+	posts, err := p.page.Locator(p.task.SelectorPost).All()
 	if err != nil {
 		return nil, fmt.Errorf("post locator: %w", err)
 	}
 	if len(posts) == 0 {
 		return nil, fmt.Errorf("no posts on page")
 	}
+
 	for _, post := range posts {
-		item, err := e.extractPost(task, post)
+		item, err := p.extractPost(post)
 		if err != nil {
 			log.Errorf("extract post fields: %v", err)
 			continue
@@ -103,48 +151,34 @@ func (e *PwExtractor) Extract(task models.Task) (result *models.TaskResult, errR
 		}
 		result.Items = append(result.Items, item)
 	}
-	if len(result.Items) == 0 {
-		return nil, fmt.Errorf("extract failed for all posts")
-	}
 
-	return result, nil
+	return &result, nil
 }
 
-func (e *PwExtractor) extractPost(task models.Task, post playwright.Locator) (models.FeedItem, error) {
-	fieldIdx := 0
-	must := func(s string, err error) string {
-		fieldIdx++
-		if err != nil {
-			log.Errorf("extract post field %d: %v", fieldIdx, err)
-			return ""
-		}
-		log.Debugf("field=%d res=%.100s", fieldIdx, s)
-		return s
-	}
+func (p *pageParser) extractPost(post playwright.Locator) (models.FeedItem, error) {
+	p.fieldIdx = 0
+	p.postIdx++
 	var item models.FeedItem
-	const defTimeout = "100ms"
-	defOpt := playwright.LocatorTextContentOptions{Timeout: pwDuration(defTimeout)}
-	defOptAttr := playwright.LocatorGetAttributeOptions{Timeout: pwDuration(defTimeout)}
-	log.Debugf("---- POST: ----")
 
-	item.Title = must(post.Locator(task.SelectorTitle).First().TextContent(defOpt))
+	item.Title = p.must(post.Locator(p.task.SelectorTitle).First().InnerText(defOptInText))
+	log.Debugf("---- POST: %s ----", item.Title)
 
-	item.Link = must(post.Locator(task.SelectorLink).First().GetAttribute("href", defOptAttr))
+	item.Link = p.must(post.Locator(p.task.SelectorLink).First().GetAttribute("href", defOptAttr))
 	page, _ := post.Page()
 	item.Link = absUrl(item.Link, page)
 
-	item.Description = must(post.Locator(task.SelectorDescription).First().TextContent(defOpt))
+	item.Description = p.must(post.Locator(p.task.SelectorDescription).First().InnerText(defOptInText))
 
-	item.AuthorName = must(post.Locator(task.SelectorAuthor).First().TextContent(defOpt))
+	item.AuthorName = p.must(post.Locator(p.task.SelectorAuthor).First().InnerText(defOptInText))
 
-	item.AuthorLink = must(post.Locator(task.SelectorAuthor).First().GetAttribute("href", defOptAttr))
+	item.AuthorLink = p.must(post.Locator(p.task.SelectorAuthor).First().GetAttribute("href", defOptAttr))
 	item.AuthorLink = absUrl(item.AuthorLink, page)
 
-	item.Content = must(post.Locator(task.SelectorContent).First().TextContent(defOpt))
+	item.Content = p.extractContent(post)
 
-	item.Enclosure = must(post.Locator(task.SelectorEnclosure).First().GetAttribute("src", defOptAttr))
+	item.Enclosure = p.must(post.Locator(p.task.SelectorEnclosure).First().GetAttribute("src", defOptAttr))
 
-	createdDateStr := must(post.Locator(task.SelectorCreated).First().TextContent(defOpt))
+	createdDateStr := p.must(post.Locator(p.task.SelectorCreated).First().InnerText(defOptInText))
 	log.Debugf("date=%s", createdDateStr)
 	createdDate, err := dateparser.Parse(nil, createdDateStr)
 	if err != nil {
@@ -153,25 +187,28 @@ func (e *PwExtractor) extractPost(task models.Task, post playwright.Locator) (mo
 		item.Created = createdDate.Time
 	}
 
+	log.Debugf("---- END POST: %s ----", item.Title)
+
 	return item, nil
 }
 
-func absUrl(link string, page playwright.Page) string {
-	if strings.HasPrefix(link, "/") {
-		pageUrl, _ := url.Parse(page.URL())
-		link = fmt.Sprintf("%s://%s%s", pageUrl.Scheme, pageUrl.Host, link)
-	}
-	log.Debugf("link=%s", link)
-	return link
-}
+//go:embed extract_post.js
+var extractPostScript string
 
-// pwDuration converts string like "10s" to milliseconds float64 pointer
-// needed for Playwright timeouts (wtf? why they don't use normal Durations?)
-func pwDuration(s string) *float64 {
-	dur, err := time.ParseDuration(s)
+func (p *pageParser) extractContent(post playwright.Locator) string {
+	postContent := post.Locator(p.task.SelectorContent)
+	result, err := postContent.Evaluate(
+		extractPostScript,
+		nil,
+		playwright.LocatorEvaluateOptions{Timeout: pwDuration("1s")},
+	)
 	if err != nil {
-		panic(fmt.Errorf("failed to parse duration %s: %w", s, err))
+		log.Errorf("extract post content: evaluate: %v", err)
+		return p.must(postContent.TextContent(defOptTextCon))
 	}
-	f64 := float64(dur.Milliseconds())
-	return &f64
+	resString, ok := result.(string)
+	if !ok {
+		log.Errorf("extract post content: result type mismatch: %v", result)
+	}
+	return resString
 }
