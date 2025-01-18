@@ -26,10 +26,11 @@ func New(natsc *nats.Conn) (*NatsAdapter, error) {
 		return nil, fmt.Errorf("create jetstream: %w", err)
 	}
 	jstream, err := jets.CreateStream(context.TODO(), jetstream.StreamConfig{
-		Name:       StreamName,
-		Subjects:   []string{fmt.Sprintf("%s.>", SubjectPrefix)},
-		Retention:  jetstream.WorkQueuePolicy,
-		Duplicates: DedupWindow,
+		Name:        StreamName,
+		Subjects:    []string{fmt.Sprintf("%s.>", SubjectPrefix)},
+		Retention:   jetstream.WorkQueuePolicy,
+		Duplicates:  DedupWindow,
+		AllowDirect: true,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("create js stream: %w", err)
