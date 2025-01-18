@@ -8,11 +8,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/egor3f/rssalchemy/internal/adapters/natsadapter"
+	"github.com/egor3f/rssalchemy/internal/config"
 	"github.com/egor3f/rssalchemy/internal/models"
 	"github.com/ericchiang/css"
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/feeds"
-	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
@@ -25,12 +25,6 @@ import (
 	"reflect"
 	"time"
 )
-
-type Config struct {
-	WebserverAddress string `yaml:"webserver_address" env:"WEBSERVER_ADDRESS" env-required:"true"`
-	NatsUrl          string `yaml:"nats_url" env:"NATS_URL" env-required:"true"`
-	Debug            bool   `yaml:"debug" env:"DEBUG"`
-}
 
 type Specs struct {
 	URL                 string `json:"URL" validate:"url"`
@@ -46,8 +40,7 @@ type Specs struct {
 }
 
 func main() {
-	var cfg Config
-	err := cleanenv.ReadConfig("config.yml", &cfg)
+	cfg, err := config.Read()
 	if err != nil {
 		log.Panicf("reading config failed: %v", err)
 	}

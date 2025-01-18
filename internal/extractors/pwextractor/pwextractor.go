@@ -3,6 +3,7 @@ package pwextractor
 import (
 	_ "embed"
 	"fmt"
+	"github.com/egor3f/rssalchemy/internal/config"
 	"github.com/egor3f/rssalchemy/internal/models"
 	"github.com/labstack/gommon/log"
 	"github.com/markusmobius/go-dateparser"
@@ -23,16 +24,21 @@ type PwExtractor struct {
 	chrome playwright.Browser
 }
 
-func New() (*PwExtractor, error) {
+func New(cfg config.Config) (*PwExtractor, error) {
 	e := PwExtractor{}
 	var err error
 	e.pw, err = playwright.Run()
 	if err != nil {
 		return nil, fmt.Errorf("run playwright: %w", err)
 	}
+	proxy, err := parseProxy(cfg.Proxy)
+	if err != nil {
+		return nil, fmt.Errorf("parse proxy: %w", err)
+	}
 	e.chrome, err = e.pw.Chromium.Launch(playwright.BrowserTypeLaunchOptions{
 		ChromiumSandbox: playwright.Bool(true),
 		HandleSIGINT:    playwright.Bool(false),
+		Proxy:           proxy,
 		Timeout:         pwDuration("5s"),
 	})
 	if err != nil {

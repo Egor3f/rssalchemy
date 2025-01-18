@@ -5,25 +5,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/egor3f/rssalchemy/internal/adapters/natsadapter"
+	"github.com/egor3f/rssalchemy/internal/config"
 	"github.com/egor3f/rssalchemy/internal/extractors/pwextractor"
 	"github.com/egor3f/rssalchemy/internal/models"
-	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/labstack/gommon/log"
 	"github.com/nats-io/nats.go"
 	"os"
 	"os/signal"
 )
 
-type Config struct {
-	NatsUrl string `yaml:"nats_url" env:"NATS_URL" env-required:"true"`
-	Debug   bool   `yaml:"debug" env:"DEBUG"`
-}
-
 func main() {
-	var cfg Config
-	err := cleanenv.ReadConfig("config.yml", &cfg)
+	cfg, err := config.Read()
 	if err != nil {
-		log.Panicf("reading config failed: %w", err)
+		log.Panicf("reading config failed: %v", err)
 	}
 
 	if cfg.Debug {
@@ -53,7 +47,7 @@ func main() {
 		log.Panicf("create nats adapter: %v", err)
 	}
 
-	pwe, err := pwextractor.New()
+	pwe, err := pwextractor.New(cfg)
 	if err != nil {
 		log.Panicf("create pw extractor: %v", err)
 	}
