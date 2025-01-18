@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/egor3f/rssalchemy/internal/config"
 	"github.com/egor3f/rssalchemy/internal/extractors/pwextractor"
 	"github.com/egor3f/rssalchemy/internal/models"
 	"github.com/labstack/gommon/log"
@@ -11,10 +12,13 @@ func main() {
 	log.SetLevel(log.DEBUG)
 	log.SetHeader(`${level}`)
 
+	// this code is temporary!
+	// todo: rewrite not to use hardcoded tasks
+
 	task := models.Task{
-		URL:                 "https://vombat.su",
-		SelectorPost:        "div.post-body",
-		SelectorTitle:       "h1 a",
+		URL:                 "https://2ip.ru",
+		SelectorPost:        "div.ip",
+		SelectorTitle:       "span",
 		SelectorLink:        "h1 a",
 		SelectorDescription: "div.post-content-block p",
 		SelectorAuthor:      "a:has(> span.post-author)",
@@ -23,7 +27,12 @@ func main() {
 		SelectorEnclosure:   "article img.object-contain",
 	}
 
-	pwe, err := pwextractor.New()
+	cfg, err := config.Read()
+	if err != nil {
+		log.Panicf("read config: %v", err)
+	}
+
+	pwe, err := pwextractor.New(cfg)
 	if err != nil {
 		log.Panicf("create pw extractor: %v", err)
 	}

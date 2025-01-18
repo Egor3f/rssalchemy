@@ -30,3 +30,24 @@ func pwDuration(s string) *float64 {
 	f64 := float64(dur.Milliseconds())
 	return &f64
 }
+
+func parseProxy(s string) (*playwright.Proxy, error) {
+	var proxy *playwright.Proxy
+	if len(s) > 0 {
+		proxyUrl, err := url.Parse(s)
+		if err != nil {
+			return nil, err
+		}
+		urlWithoutUser := *proxyUrl
+		urlWithoutUser.User = nil
+		proxy = &playwright.Proxy{Server: urlWithoutUser.String()}
+		if proxyUrl.User != nil {
+			user := proxyUrl.User.Username()
+			proxy.Username = &user
+			if pass, exist := proxyUrl.User.Password(); exist {
+				proxy.Password = &pass
+			}
+		}
+	}
+	return proxy, nil
+}
