@@ -79,7 +79,7 @@ func (na *NatsAdapter) ProcessWorkCached(
 					ctx,
 					fmt.Sprintf("%s.%s", SubjectPrefix, cacheKey),
 					taskPayload,
-					jetstream.WithMsgID(cacheKey),
+					//jetstream.WithMsgID(cacheKey),
 				)
 				if err != nil {
 					return nil, fmt.Errorf("nats publish error: %v", err)
