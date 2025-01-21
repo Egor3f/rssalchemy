@@ -118,7 +118,9 @@ func (na *NatsAdapter) ConsumeQueue(
 	ctx context.Context,
 	taskFunc func(taskPayload []byte) (cacheKey string, result []byte, err error),
 ) error {
-	cons, err := na.jstream.CreateOrUpdateConsumer(ctx, jetstream.ConsumerConfig{})
+	cons, err := na.jstream.CreateOrUpdateConsumer(ctx, jetstream.ConsumerConfig{
+		Durable: "worker",
+	})
 	if err != nil {
 		return fmt.Errorf("create js consumer: %w", err)
 	}
@@ -147,7 +149,7 @@ func (na *NatsAdapter) ConsumeQueue(
 
 		if taskErr != nil {
 			log.Errorf("taskFunc seq=%d error, discarding task: %v", seq, taskErr)
-			if err := msg.Nak(); err != nil {
+			if err := msg.Term(); err != nil {
 				log.Errorf("nak %d: %v", seq, err)
 			}
 			return
