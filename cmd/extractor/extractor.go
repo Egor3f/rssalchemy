@@ -10,7 +10,7 @@ import (
 
 func main() {
 	log.SetLevel(log.DEBUG)
-	log.SetHeader(`${level}`)
+	log.SetHeader(`${time_rfc3339_nano} ${level}`)
 
 	// this code is temporary!
 	// todo: rewrite not to use hardcoded tasks

@@ -12,6 +12,7 @@ require (
 	github.com/markusmobius/go-dateparser v1.2.3
 	github.com/nats-io/nats.go v1.38.0
 	github.com/playwright-community/playwright-go v0.4901.0
+	github.com/yassinebenaid/godump v0.11.1
 )
 
 require (
@@ -38,10 +39,10 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/wasilibs/go-re2 v1.3.0 // indirect
-	github.com/yassinebenaid/godump v0.11.1 // indirect
 	golang.org/x/crypto v0.32.0 // indirect
 	golang.org/x/exp v0.0.0-20220321173239-a90fa8a75705 // indirect
 	golang.org/x/net v0.34.0 // indirect
+	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/sys v0.29.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/time v0.8.0 // indirect

@@ -1,6 +1,7 @@
 package pwextractor
 
 import (
+	"context"
 	_ "embed"
 	"fmt"
 	"github.com/egor3f/rssalchemy/internal/config"
@@ -75,13 +76,6 @@ func (e *PwExtractor) Extract(task models.Task) (result *models.TaskResult, errR
 	}
 	log.Debugf("Url %s visited", task.URL)
 
-	if err := page.WaitForLoadState(playwright.PageWaitForLoadStateOptions{
-		State:   playwright.LoadStateNetworkidle,
-		Timeout: pwDuration("5s"),
-	}); err != nil {
-		log.Warnf("waiting for page load: %v", err)
-	}
-
 	parser := pageParser{
 		task: task,
 		page: page,
@@ -124,6 +118,8 @@ func (p *pageParser) parse() (*models.TaskResult, error) {
 	var result models.TaskResult
 	var err error
 
+	p.waitFullLoad()
+
 	result.Title, err = p.page.Title()
 	if err != nil {
 		return nil, fmt.Errorf("page title: %w", err)
@@ -144,6 +140,7 @@ func (p *pageParser) parse() (*models.TaskResult, error) {
 	if len(posts) == 0 {
 		return nil, fmt.Errorf("no posts on page")
 	}
+	log.Debugf("Posts count=%d", len(posts))
 
 	for _, post := range posts {
 		item, err := p.extractPost(post)
@@ -159,6 +156,33 @@ func (p *pageParser) parse() (*models.TaskResult, error) {
 	}
 
 	return &result, nil
+}
+
+func (p *pageParser) waitFullLoad() {
+	timeout := pwDuration("5s")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go func() {
+		err := p.page.WaitForLoadState(playwright.PageWaitForLoadStateOptions{
+			State:   playwright.LoadStateNetworkidle,
+			Timeout: timeout,
+		})
+		log.Debugf("WaitFor LoadState finished with %v", err)
+		cancel()
+	}()
+	go func() {
+		err := p.page.Locator(p.task.SelectorPost).Locator(p.task.SelectorTitle).Last().WaitFor(
+			playwright.LocatorWaitForOptions{
+				State:   playwright.WaitForSelectorStateVisible,
+				Timeout: timeout,
+			},
+		)
+		log.Debugf("WaitFor LOCATOR finished with %v", err)
+		cancel()
+	}()
+
+	<-ctx.Done()
 }
 
 func (p *pageParser) extractPost(post playwright.Locator) (models.FeedItem, error) {
@@ -192,8 +216,6 @@ func (p *pageParser) extractPost(post playwright.Locator) (models.FeedItem, erro
 	} else {
 		item.Created = createdDate.Time
 	}
-
-	log.Debugf("---- END POST: %s ----", item.Title)
 
 	return item, nil
 }
