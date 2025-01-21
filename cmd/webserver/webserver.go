@@ -97,9 +97,9 @@ func main() {
 				SelectorEnclosure:   specs.SelectorEnclosure,
 			}
 
-			taskTimeout, _ := time.ParseDuration("20s")
+			taskTimeout := 20 * time.Second
 			minLifetime := taskTimeout
-			maxLifetime, _ := time.ParseDuration("24h")
+			maxLifetime := 24 * time.Hour
 			cacheLifetime, err := time.ParseDuration(specs.CacheLifetime)
 			if err != nil {
 				return echo.NewHTTPError(400, "invalid cache lifetime")
