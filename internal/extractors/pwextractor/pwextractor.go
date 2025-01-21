@@ -161,7 +161,6 @@ func (p *pageParser) parse() (*models.TaskResult, error) {
 func (p *pageParser) waitFullLoad() {
 	timeout := pwDuration("5s")
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	go func() {
 		err := p.page.WaitForLoadState(playwright.PageWaitForLoadStateOptions{
