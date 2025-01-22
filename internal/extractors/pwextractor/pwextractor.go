@@ -58,10 +58,10 @@ func (e *PwExtractor) Stop() error {
 	return nil
 }
 
-func (e *PwExtractor) Extract(task models.Task) (result *models.TaskResult, errRet error) {
+func (e *PwExtractor) visitPage(pageUrl string, cb func(page playwright.Page) error) (errRet error) {
 	page, err := e.chrome.NewPage()
 	if err != nil {
-		return nil, fmt.Errorf("browser new page: %w", err)
+		return fmt.Errorf("browser new page: %w", err)
 	}
 	defer func() {
 		err := page.Close()
@@ -71,25 +71,58 @@ func (e *PwExtractor) Extract(task models.Task) (result *models.TaskResult, errR
 	}()
 	log.Debugf("Page opened")
 
-	if _, err := page.Goto(task.URL); err != nil {
-		return nil, fmt.Errorf("goto page: %w", err)
+	if _, err := page.Goto(pageUrl); err != nil {
+		return fmt.Errorf("goto page: %w", err)
 	}
-	log.Debugf("Url %s visited", task.URL)
+	log.Debugf("Url %s visited", pageUrl)
+	defer log.Debugf("Visiting page %s finished", pageUrl)
 
-	parser := pageParser{
-		task: task,
-		page: page,
-	}
+	return cb(page)
+}
 
-	result, err = parser.parse()
-	if err != nil {
-		return nil, fmt.Errorf("parse page: %w", err)
-	}
-	if len(result.Items) == 0 {
-		return nil, fmt.Errorf("extract failed for all posts")
-	}
+func (e *PwExtractor) Extract(task models.Task) (result *models.TaskResult, errRet error) {
+	errRet = e.visitPage(task.URL, func(page playwright.Page) error {
+		parser := pageParser{
+			task: task,
+			page: page,
+		}
+		var err error
+		result, err = parser.parse()
+		if err != nil {
+			return fmt.Errorf("parse page: %w", err)
+		}
+		if len(result.Items) == 0 {
+			return fmt.Errorf("extract failed for all posts")
+		}
+		return nil
+	})
+	return
+}
 
-	return result, nil
+func (e *PwExtractor) Screenshot(task models.Task) (result *models.ScreenshotTaskResult, errRet error) {
+	errRet = e.visitPage(task.URL, func(page playwright.Page) error {
+		err := page.WaitForLoadState(playwright.PageWaitForLoadStateOptions{
+			State:   playwright.LoadStateNetworkidle,
+			Timeout: pwDuration("5s"),
+		})
+		if err != nil {
+			log.Debugf("Wait for network idle: %w", err)
+		}
+		if err := page.SetViewportSize(1280, 800); err != nil {
+			return fmt.Errorf("set viewport size: %w", err)
+		}
+		screenshot, err := page.Screenshot(playwright.PageScreenshotOptions{
+			Animations: playwright.ScreenshotAnimationsDisabled,
+			Timeout:    pwDuration("5s"),
+		})
+		if err != nil {
+			return fmt.Errorf("make screenshot: %w", err)
+		}
+		log.Infof("Screenshot finished; total size: %d bytes", len(screenshot))
+		result = &models.ScreenshotTaskResult{Image: screenshot}
+		return nil
+	})
+	return
 }
 
 type pageParser struct {

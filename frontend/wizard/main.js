@@ -47,24 +47,35 @@ function displayUrl(url) {
 }
 
 function baseUrl() {
-    return document.location.origin + '/api/v1/render/';
+    return document.location.origin + '/api/v1';
 }
 
 async function genUrl() {
     let specs = readSpecsForm();
     let encodedSpecs = await encodeSpecs(specs);
-    let url = baseUrl() + encodedSpecs;
+    let url = baseUrl() + '/render/' + encodedSpecs;
     displayUrl(url);
 }
 
 async function editUrl() {
     let url = document.getElementById('url_input').value;
-    let specs = await decodeSpecs(url.replace(baseUrl(), ''));
+    let specs = await decodeSpecs(url.replace(baseUrl() + '/render/', ''));
     writeSpecsToForm(specs);
     displayUrl(url);
+}
+
+function onUrlInput() {
+    let url = document.forms['wizard'].elements['url'].value;
+    if (url.trim().length > 0) {
+        document.getElementById('page_screenshot_link').style.visibility = 'visible';
+        document.getElementById('page_screenshot_link').href = `${baseUrl()}/screenshot?url=${url}`;
+    } else {
+        document.getElementById('page_screenshot_link').style.visibility = 'hidden';
+    }
 }
 
 document.addEventListener('DOMContentLoaded', ev => {
     document.getElementById('btn_gen_url').addEventListener('click', genUrl);
     document.getElementById('btn_edit').addEventListener('click', editUrl);
+    document.getElementById('w_url').addEventListener('input', onUrlInput);
 });
