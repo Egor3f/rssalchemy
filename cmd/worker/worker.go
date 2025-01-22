@@ -63,10 +63,15 @@ func main() {
 			errRet = fmt.Errorf("unmarshal task: %w", err)
 			return
 		}
-		cacheKey = task.CacheKey()
-		result, err := pwe.Extract(task)
+		var result any
+		switch task.TaskType {
+		case models.TaskTypeExtract:
+			result, err = pwe.Extract(task)
+		case models.TaskTypePageScreenshot:
+			result, err = pwe.Screenshot(task)
+		}
 		if err != nil {
-			errRet = fmt.Errorf("extract: %w", err)
+			errRet = fmt.Errorf("task processing: %w", err)
 			return
 		}
 		resultPayoad, err = json.Marshal(result)
@@ -74,7 +79,7 @@ func main() {
 			errRet = fmt.Errorf("marshal result: %w", err)
 			return
 		}
-		return
+		return task.CacheKey(), resultPayoad, errRet
 	})
 	if err != nil {
 		log.Panicf("consume queue: %v", err)

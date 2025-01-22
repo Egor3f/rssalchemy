@@ -16,7 +16,14 @@ import (
 	"github.com/labstack/gommon/log"
 	"html"
 	"io"
+	"net/url"
 	"time"
+)
+
+const (
+	taskTimeout = 20 * time.Second
+	minLifetime = taskTimeout
+	maxLifetime = 24 * time.Hour
 )
 
 type Handler struct {
@@ -35,6 +42,7 @@ func New(cq adapters.CachedWorkQueue) *Handler {
 
 func (h *Handler) SetupRoutes(g *echo.Group) {
 	g.GET("/render/:specs", h.handleRender)
+	g.GET("/screenshot", h.handlePageScreenshot)
 }
 
 type Specs struct {
@@ -58,6 +66,7 @@ func (h *Handler) handleRender(c echo.Context) error {
 	}
 
 	task := models.Task{
+		TaskType:            models.TaskTypeExtract,
 		URL:                 specs.URL,
 		SelectorPost:        specs.SelectorPost,
 		SelectorTitle:       specs.SelectorTitle,
@@ -69,9 +78,6 @@ func (h *Handler) handleRender(c echo.Context) error {
 		SelectorEnclosure:   specs.SelectorEnclosure,
 	}
 
-	taskTimeout := 20 * time.Second
-	minLifetime := taskTimeout
-	maxLifetime := 24 * time.Hour
 	cacheLifetime, err := time.ParseDuration(specs.CacheLifetime)
 	if err != nil {
 		return echo.NewHTTPError(400, "invalid cache lifetime")
@@ -98,7 +104,6 @@ func (h *Handler) handleRender(c echo.Context) error {
 
 	var result models.TaskResult
 	if err := json.Unmarshal(taskResultBytes, &result); err != nil {
-		log.Errorf("cached value unmarshal failed: %v", err)
 		return echo.NewHTTPError(500, fmt.Errorf("cached value unmarshal failed: %v", err))
 	}
 
@@ -110,6 +115,38 @@ func (h *Handler) handleRender(c echo.Context) error {
 
 	c.Response().Header().Set("Content-Type", "text/xml")
 	return c.String(200, atom)
+}
+
+func (h *Handler) handlePageScreenshot(c echo.Context) error {
+	pageUrl := c.QueryParam("url")
+	if _, err := url.Parse(pageUrl); err != nil {
+		return echo.NewHTTPError(400, "url is invalid or missing")
+	}
+
+	task := models.Task{
+		TaskType: models.TaskTypePageScreenshot,
+		URL:      pageUrl,
+	}
+
+	timeoutCtx, cancel := context.WithTimeout(context.Background(), taskTimeout)
+	defer cancel()
+
+	encodedTask, err := json.Marshal(task)
+	if err != nil {
+		return echo.NewHTTPError(500, fmt.Errorf("task marshal error: %v", err))
+	}
+
+	cacheLifetime := minLifetime
+	taskResultBytes, err := h.CachedQueue.ProcessWorkCached(timeoutCtx, cacheLifetime, task.CacheKey(), encodedTask)
+	if err != nil {
+		return echo.NewHTTPError(500, fmt.Errorf("queued cache failed: %v", err))
+	}
+
+	var result models.ScreenshotTaskResult
+	if err := json.Unmarshal(taskResultBytes, &result); err != nil {
+		return echo.NewHTTPError(500, fmt.Errorf("task result unmarshal failed: %v", err))
+	}
+	return c.Blob(200, "image/png", result.Image)
 }
 
 func (h *Handler) decodeSpecs(specsParam string) (Specs, error) {

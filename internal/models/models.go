@@ -6,8 +6,16 @@ import (
 	"time"
 )
 
+type TaskType string
+
+const (
+	TaskTypeExtract        = "extract"
+	TaskTypePageScreenshot = "page_screenshot"
+)
+
 type Task struct {
 	// While adding new fields, dont forget to alter caching func
+	TaskType            TaskType
 	URL                 string
 	SelectorPost        string
 	SelectorTitle       string
@@ -30,7 +38,7 @@ func (t Task) CacheKey() string {
 	h.Write([]byte(t.SelectorCreated))
 	h.Write([]byte(t.SelectorContent))
 	h.Write([]byte(t.SelectorEnclosure))
-	return fmt.Sprintf("%x", h.Sum(nil))
+	return fmt.Sprintf("%s_%x", t.TaskType, h.Sum(nil))
 }
 
 type FeedItem struct {
@@ -49,4 +57,8 @@ type TaskResult struct {
 	Title string
 	Items []FeedItem
 	Icon  string
+}
+
+type ScreenshotTaskResult struct {
+	Image []byte // png
 }
