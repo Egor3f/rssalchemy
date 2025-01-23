@@ -126,6 +126,7 @@ func (h *Handler) handlePageScreenshot(c echo.Context) error {
 	task := models.Task{
 		TaskType: models.TaskTypePageScreenshot,
 		URL:      pageUrl,
+		Headers:  extractHeaders(c),
 	}
 
 	timeoutCtx, cancel := context.WithTimeout(context.Background(), taskTimeout)
@@ -200,4 +201,14 @@ func makeFeed(task models.Task, result models.TaskResult) (string, error) {
 		return "", fmt.Errorf("feed to xml: %w", err)
 	}
 	return atom, nil
+}
+
+func extractHeaders(c echo.Context) map[string]string {
+	headers := make(map[string]string)
+	for _, hName := range []string{"Accept-Language", "Cookie"} {
+		if len(c.Request().Header.Get(hName)) > 0 {
+			headers[hName] = c.Request().Header.Get(hName)
+		}
+	}
+	return headers
 }

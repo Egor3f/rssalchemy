@@ -25,6 +25,7 @@ type Task struct {
 	SelectorCreated     string
 	SelectorContent     string
 	SelectorEnclosure   string
+	Headers             map[string]string
 }
 
 func (t Task) CacheKey() string {
@@ -38,6 +39,7 @@ func (t Task) CacheKey() string {
 	h.Write([]byte(t.SelectorCreated))
 	h.Write([]byte(t.SelectorContent))
 	h.Write([]byte(t.SelectorEnclosure))
+	h.Write([]byte(fmt.Sprintf("%+v", t.Headers)))
 	return fmt.Sprintf("%s_%x", t.TaskType, h.Sum(nil))
 }
 

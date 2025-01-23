@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/playwright-community/playwright-go"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 )
@@ -50,4 +51,34 @@ func parseProxy(s string) (*playwright.Proxy, error) {
 		}
 	}
 	return proxy, nil
+}
+
+func parseBaseDomain(urlStr string) (string, error) {
+	pageUrl, err := url.Parse(urlStr)
+	if err != nil {
+		return "", fmt.Errorf("task url parsing: %w", err)
+	}
+	domainParts := strings.Split(pageUrl.Host, ".")
+	slices.Reverse(domainParts) // com, example, www
+	return fmt.Sprintf("%s.%s", domainParts[1], domainParts[0]), nil
+}
+
+func parseCookieString(cookieStr string) (map[string]string, error) {
+	result := make(map[string]string)
+	failed := fmt.Errorf("failed to parse cookies")
+
+	for _, cook := range strings.Split(cookieStr, ";") {
+		kv := strings.Split(cook, "=")
+		if len(kv) != 2 {
+			return nil, failed
+		}
+		k, err1 := url.QueryUnescape(kv[0])
+		v, err2 := url.QueryUnescape(kv[1])
+		if err1 != nil || err2 != nil {
+			return nil, failed
+		}
+		result[k] = v
+	}
+
+	return result, nil
 }
