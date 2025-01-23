@@ -9,6 +9,7 @@ import (
 	"github.com/labstack/gommon/log"
 	"github.com/markusmobius/go-dateparser"
 	"github.com/playwright-community/playwright-go"
+	"maps"
 )
 
 // Timeouts
@@ -19,6 +20,9 @@ var (
 	defOptAttr    = playwright.LocatorGetAttributeOptions{Timeout: pwDuration(defTimeout)}
 	defOptEval    = playwright.LocatorEvaluateOptions{Timeout: pwDuration(defTimeout)}
 )
+
+var userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36"
+var secChUa = `"Chromium";v="132", "Google Chrome";v="132", "Not-A.Brand";v="99"`
 
 type PwExtractor struct {
 	pw     *playwright.Playwright
@@ -58,30 +62,82 @@ func (e *PwExtractor) Stop() error {
 	return nil
 }
 
-func (e *PwExtractor) visitPage(pageUrl string, cb func(page playwright.Page) error) (errRet error) {
-	page, err := e.chrome.NewPage()
+func (e *PwExtractor) visitPage(task models.Task, cb func(page playwright.Page) error) (errRet error) {
+	headers := maps.Clone(task.Headers)
+	headers["Sec-Ch-Ua"] = secChUa
+	var cookieStr string
+	if v, ok := headers["Cookie"]; ok {
+		cookieStr = v
+		delete(headers, "Cookie")
+	}
+
+	bCtx, err := e.chrome.NewContext(playwright.BrowserNewContextOptions{
+		ExtraHttpHeaders: headers,
+		UserAgent:        &userAgent,
+	})
+	if err != nil {
+		return fmt.Errorf("create browser context: %w", err)
+	}
+	defer func() {
+		if err := bCtx.Close(); err != nil {
+			errRet = fmt.Errorf("close context: %w; other error=%w", err, errRet)
+		}
+	}()
+
+	if len(cookieStr) > 0 {
+		cookies, err := parseCookieString(cookieStr)
+		if err != nil {
+			return fmt.Errorf("parsing cookies: %w", err)
+		}
+
+		baseDomain, err := parseBaseDomain(task.URL)
+		if err != nil {
+			return fmt.Errorf("parse base domain: %w", err)
+		}
+
+		var pwCookies []playwright.OptionalCookie
+		for k, v := range cookies {
+			pwCookies = append(pwCookies, playwright.OptionalCookie{
+				Name:   k,
+				Value:  v,
+				Domain: playwright.String(fmt.Sprintf(".%s", baseDomain)),
+				Path:   playwright.String("/"),
+			})
+		}
+
+		if err := bCtx.AddCookies(pwCookies); err != nil {
+			return fmt.Errorf("add cookies: %w", err)
+		}
+	}
+
+	page, err := bCtx.NewPage()
 	if err != nil {
 		return fmt.Errorf("browser new page: %w", err)
 	}
 	defer func() {
-		err := page.Close()
-		if err != nil {
+		if err := page.Close(); err != nil {
 			errRet = fmt.Errorf("close page: %w; other error=%w", err, errRet)
 		}
 	}()
 	log.Debugf("Page opened")
 
-	if _, err := page.Goto(pageUrl); err != nil {
+	if len(task.Headers) > 0 {
+		if err := page.SetExtraHTTPHeaders(task.Headers); err != nil {
+			return fmt.Errorf("set headers: %w", err)
+		}
+	}
+
+	if _, err := page.Goto(task.URL, playwright.PageGotoOptions{Timeout: pwDuration("10s")}); err != nil {
 		return fmt.Errorf("goto page: %w", err)
 	}
-	log.Debugf("Url %s visited", pageUrl)
-	defer log.Debugf("Visiting page %s finished", pageUrl)
+	log.Debugf("Url %s visited", task.URL)
+	defer log.Debugf("Visiting page %s finished", task.URL)
 
 	return cb(page)
 }
 
 func (e *PwExtractor) Extract(task models.Task) (result *models.TaskResult, errRet error) {
-	errRet = e.visitPage(task.URL, func(page playwright.Page) error {
+	errRet = e.visitPage(task, func(page playwright.Page) error {
 		parser := pageParser{
 			task: task,
 			page: page,
@@ -100,7 +156,7 @@ func (e *PwExtractor) Extract(task models.Task) (result *models.TaskResult, errR
 }
 
 func (e *PwExtractor) Screenshot(task models.Task) (result *models.ScreenshotTaskResult, errRet error) {
-	errRet = e.visitPage(task.URL, func(page playwright.Page) error {
+	errRet = e.visitPage(task, func(page playwright.Page) error {
 		err := page.WaitForLoadState(playwright.PageWaitForLoadStateOptions{
 			State:   playwright.LoadStateNetworkidle,
 			Timeout: pwDuration("5s"),
