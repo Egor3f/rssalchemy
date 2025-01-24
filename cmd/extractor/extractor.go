@@ -16,9 +16,9 @@ func main() {
 	// todo: rewrite not to use hardcoded tasks
 
 	task := models.Task{
-		URL:                 "https://2ip.ru",
-		SelectorPost:        "div.ip",
-		SelectorTitle:       "span",
+		URL:                 "https://vombat.su",
+		SelectorPost:        "div.post-body",
+		SelectorTitle:       "h1 a",
 		SelectorLink:        "h1 a",
 		SelectorDescription: "div.post-content-block p",
 		SelectorAuthor:      "a:has(> span.post-author)",
