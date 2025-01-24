@@ -10,6 +10,7 @@ import (
 	"github.com/markusmobius/go-dateparser"
 	"github.com/playwright-community/playwright-go"
 	"maps"
+	"strings"
 )
 
 // Timeouts
@@ -96,12 +97,13 @@ func (e *PwExtractor) visitPage(task models.Task, cb func(page playwright.Page) 
 		}
 
 		var pwCookies []playwright.OptionalCookie
-		for k, v := range cookies {
+		for _, cook := range cookies {
 			pwCookies = append(pwCookies, playwright.OptionalCookie{
-				Name:   k,
-				Value:  v,
+				Name:   cook[0],
+				Value:  cook[1],
 				Domain: playwright.String(fmt.Sprintf(".%s", baseDomain)),
 				Path:   playwright.String("/"),
+				Secure: playwright.Bool(strings.HasPrefix(cook[0], "__Secure")),
 			})
 		}
 

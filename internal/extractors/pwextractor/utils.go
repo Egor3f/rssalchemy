@@ -63,21 +63,20 @@ func parseBaseDomain(urlStr string) (string, error) {
 	return fmt.Sprintf("%s.%s", domainParts[1], domainParts[0]), nil
 }
 
-func parseCookieString(cookieStr string) (map[string]string, error) {
-	result := make(map[string]string)
-	failed := fmt.Errorf("failed to parse cookies")
+func parseCookieString(cookieStr string) ([][2]string, error) {
+	var result [][2]string
 
 	for _, cook := range strings.Split(cookieStr, ";") {
 		kv := strings.Split(cook, "=")
-		if len(kv) != 2 {
-			return nil, failed
+		if len(kv) < 2 {
+			return nil, fmt.Errorf("failed to parse cookies: split by =: count<2")
 		}
 		k, err1 := url.QueryUnescape(kv[0])
-		v, err2 := url.QueryUnescape(kv[1])
+		v, err2 := url.QueryUnescape(strings.Join(kv[1:], "="))
 		if err1 != nil || err2 != nil {
-			return nil, failed
+			return nil, fmt.Errorf("failed to parse cookies: unescape k=%w v=%w", err1, err2)
 		}
-		result[k] = v
+		result = append(result, [2]string{strings.TrimSpace(k), strings.TrimSpace(v)})
 	}
 
 	return result, nil
