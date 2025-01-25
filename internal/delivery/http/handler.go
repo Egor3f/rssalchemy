@@ -50,10 +50,10 @@ type Specs struct {
 	SelectorPost        string `json:"selector_post" validate:"selector"`
 	SelectorTitle       string `json:"selector_title" validate:"selector"`
 	SelectorLink        string `json:"selector_link" validate:"selector"`
-	SelectorDescription string `json:"selector_description" validate:"selector"`
+	SelectorDescription string `json:"selector_description" validate:"omitempty,selector"`
 	SelectorAuthor      string `json:"selector_author" validate:"selector"`
 	SelectorCreated     string `json:"selector_created" validate:"selector"`
-	SelectorContent     string `json:"selector_content" validate:"selector"`
+	SelectorContent     string `json:"selector_content" validate:"omitempty,selector"`
 	SelectorEnclosure   string `json:"selector_enclosure" validate:"selector"`
 	CacheLifetime       string `json:"cache_lifetime"`
 }
