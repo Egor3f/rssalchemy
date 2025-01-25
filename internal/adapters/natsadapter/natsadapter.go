@@ -139,6 +139,9 @@ func (na *NatsAdapter) ConsumeQueue(
 		defer func() {
 			if err := recover(); err != nil {
 				log.Errorf("recovered panic from consumer: %v", err)
+				if err := msg.Term(); err != nil {
+					log.Errorf("term in recover: %v", err)
+				}
 			}
 		}()
 		cacheKey, resultPayload, taskErr := taskFunc(msg.Data())
