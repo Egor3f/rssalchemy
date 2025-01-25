@@ -1,30 +1,33 @@
 package main
 
 import (
+	"encoding/json"
 	"github.com/egor3f/rssalchemy/internal/config"
 	"github.com/egor3f/rssalchemy/internal/extractors/pwextractor"
 	"github.com/egor3f/rssalchemy/internal/models"
 	"github.com/labstack/gommon/log"
 	"github.com/yassinebenaid/godump"
+	"io"
+	"os"
 )
 
 func main() {
 	log.SetLevel(log.DEBUG)
 	log.SetHeader(`${time_rfc3339_nano} ${level}`)
 
-	// this code is temporary!
-	// todo: rewrite not to use hardcoded tasks
-
-	task := models.Task{
-		URL:                 "https://vombat.su",
-		SelectorPost:        "div.post-body",
-		SelectorTitle:       "h1 a",
-		SelectorLink:        "h1 a",
-		SelectorDescription: "div.post-content-block p",
-		SelectorAuthor:      "a:has(> span.post-author)",
-		SelectorCreated:     "div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2)",
-		SelectorContent:     "div.post-content-block",
-		SelectorEnclosure:   "article img.object-contain",
+	taskFile, err := os.Open("task.json")
+	if err != nil {
+		log.Panicf("open file: %v", err)
+	}
+	//goland:noinspection GoUnhandledErrorResult
+	defer taskFile.Close()
+	fileContents, err := io.ReadAll(taskFile)
+	if err != nil {
+		log.Panicf("read file: %v", err)
+	}
+	var task models.Task
+	if err := json.Unmarshal(fileContents, &task); err != nil {
+		log.Panicf("unmarshal task: %v", err)
 	}
 
 	cfg, err := config.Read()
