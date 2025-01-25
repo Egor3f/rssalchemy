@@ -76,6 +76,7 @@ func (h *Handler) handleRender(c echo.Context) error {
 		SelectorCreated:     specs.SelectorCreated,
 		SelectorContent:     specs.SelectorContent,
 		SelectorEnclosure:   specs.SelectorEnclosure,
+		Headers:             extractHeaders(c),
 	}
 
 	cacheLifetime, err := time.ParseDuration(specs.CacheLifetime)
