@@ -7,7 +7,6 @@ import (
 	"github.com/egor3f/rssalchemy/internal/config"
 	"github.com/egor3f/rssalchemy/internal/models"
 	"github.com/labstack/gommon/log"
-	"github.com/markusmobius/go-dateparser"
 	"github.com/playwright-community/playwright-go"
 	"maps"
 	"strings"
@@ -304,7 +303,7 @@ func (p *pageParser) extractPost(post playwright.Locator) (models.FeedItem, erro
 
 	createdDateStr := p.must(post.Locator(p.task.SelectorCreated).First().InnerText(defOptInText))
 	log.Debugf("date=%s", createdDateStr)
-	createdDate, err := dateparser.Parse(nil, createdDateStr)
+	createdDate, err := parseDate(createdDateStr)
 	if err != nil {
 		log.Errorf("dateparser: %v", err)
 	} else {
