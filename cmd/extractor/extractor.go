@@ -47,7 +47,16 @@ func main() {
 
 	result, err := pwe.Extract(task)
 	if err != nil {
-		log.Panicf("extract: %v", err)
+		log.Errorf("extract: %v", err)
+		scrResult, err := pwe.Screenshot(task)
+		if err != nil {
+			log.Errorf("screenshot failed: %v", err)
+		}
+		err = os.WriteFile("screenshot.png", scrResult.Image, 0600)
+		if err != nil {
+			log.Errorf("screenshot save failed: %v", err)
+		}
+		return
 	}
 
 	dumper := godump.Dumper{Theme: godump.Theme{
