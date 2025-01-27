@@ -32,14 +32,16 @@ for task in $task_dir/*; do
   set +e
     cd $old_dir
     rm -f $old_dir/screenshot.png
-    go run github.com/egor3f/rssalchemy/cmd/extractor "$task" > $old_out 2>&1
+    sleep 2
+    go run github.com/egor3f/rssalchemy/cmd/extractor -o $old_out "$task"
     if [ $? != 0 ]; then
       echo "Failed to run old version"
       cat $old_out
       exit 1
     fi
     cd -
-    go run github.com/egor3f/rssalchemy/cmd/extractor "$task" > $cur_out 2>&1
+    sleep 2
+    go run github.com/egor3f/rssalchemy/cmd/extractor -o $cur_out "$task"
     if [ $? != 0 ]; then
       echo "Failed to run new version"
       cat $cur_out
