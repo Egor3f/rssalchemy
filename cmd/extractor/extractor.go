@@ -2,12 +2,12 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"github.com/egor3f/rssalchemy/internal/config"
 	"github.com/egor3f/rssalchemy/internal/dateparser"
 	"github.com/egor3f/rssalchemy/internal/extractors/pwextractor"
 	"github.com/egor3f/rssalchemy/internal/models"
 	"github.com/labstack/gommon/log"
-	"github.com/yassinebenaid/godump"
 	"io"
 	"os"
 	"time"
@@ -15,16 +15,30 @@ import (
 
 func main() {
 	log.SetLevel(log.DEBUG)
-	log.SetHeader(`${level}`)
+	log.SetHeader(`${time_rfc3339_nano} ${level}`)
+
+	outFile := flag.String("o", "", "Output file name")
+	flag.Parse()
 
 	taskFileName := "task.json"
-	if len(os.Args) > 1 {
-		taskFileName = os.Args[1]
+	if flag.NArg() > 0 {
+		taskFileName = flag.Arg(0)
+	}
+
+	out := os.Stdout
+	if len(*outFile) > 0 {
+		var err error
+		out, err = os.OpenFile(*outFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+		if err != nil {
+			log.Panicf("open output file: %v", err)
+		}
+		//goland:noinspection GoUnhandledErrorResult
+		defer out.Close()
 	}
 
 	taskFile, err := os.Open(taskFileName)
 	if err != nil {
-		log.Panicf("open file: %v", err)
+		log.Panicf("open task file: %v", err)
 	}
 	//goland:noinspection GoUnhandledErrorResult
 	defer taskFile.Close()
@@ -74,20 +88,13 @@ func main() {
 		return
 	}
 
-	dumper := godump.Dumper{Theme: godump.Theme{
-		String:        godump.RGB{117, 54, 217},
-		Quotes:        godump.RGB{143, 41, 0},
-		Bool:          godump.RGB{6, 168, 199},
-		Number:        godump.RGB{245, 77, 13},
-		Types:         godump.RGB{255, 105, 56},
-		Address:       godump.RGB{50, 162, 255},
-		PointerTag:    godump.RGB{145, 145, 145},
-		Nil:           godump.RGB{36, 198, 229},
-		Func:          godump.RGB{95, 165, 35},
-		Fields:        godump.RGB{66, 79, 61},
-		Chan:          godump.RGB{60, 101, 179},
-		UnsafePointer: godump.RGB{166, 62, 75},
-		Braces:        godump.RGB{70, 169, 169},
-	}}
-	_ = dumper.Println(result)
+	resultStr, err := json.MarshalIndent(result, "", "\t")
+	if err != nil {
+		log.Panicf("marshal result: %v", err)
+	}
+	n, err := out.Write(resultStr)
+	if err != nil {
+		log.Panicf("write output: %v", err)
+	}
+	log.Infof("Result written (%d bytes)", n)
 }
