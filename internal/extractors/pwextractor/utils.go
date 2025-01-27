@@ -2,8 +2,6 @@ package pwextractor
 
 import (
 	"fmt"
-	"github.com/markusmobius/go-dateparser"
-	"github.com/markusmobius/go-dateparser/date"
 	"github.com/playwright-community/playwright-go"
 	"net/url"
 	"slices"
@@ -82,25 +80,4 @@ func parseCookieString(cookieStr string) ([][2]string, error) {
 	}
 
 	return result, nil
-}
-
-func parseDate(str string) (d date.Date, err error) {
-	str = strings.TrimSpace(str)
-
-	d, err = dateparser.Parse(nil, str)
-	if err == nil {
-		return
-	}
-
-	parts := strings.Split(str, " ")
-	for len(parts) > 1 {
-		newStr := strings.Join(parts, " ")
-		d, err = dateparser.Parse(nil, newStr)
-		if err == nil {
-			return
-		}
-		parts = parts[1:]
-	}
-
-	return
 }

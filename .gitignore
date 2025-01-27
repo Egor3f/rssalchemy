@@ -2,5 +2,7 @@
 /trash/
 /todo.md
 /.env.dev
-/task.json
-/screenshot.png
+/task*.json
+/screenshot*.png
+node_modules
+.vite

@@ -3,19 +3,26 @@ package main
 import (
 	"encoding/json"
 	"github.com/egor3f/rssalchemy/internal/config"
+	"github.com/egor3f/rssalchemy/internal/dateparser"
 	"github.com/egor3f/rssalchemy/internal/extractors/pwextractor"
 	"github.com/egor3f/rssalchemy/internal/models"
 	"github.com/labstack/gommon/log"
 	"github.com/yassinebenaid/godump"
 	"io"
 	"os"
+	"time"
 )
 
 func main() {
 	log.SetLevel(log.DEBUG)
-	log.SetHeader(`${time_rfc3339_nano} ${level}`)
+	log.SetHeader(`${level}`)
 
-	taskFile, err := os.Open("task.json")
+	taskFileName := "task.json"
+	if len(os.Args) > 1 {
+		taskFileName = os.Args[1]
+	}
+
+	taskFile, err := os.Open(taskFileName)
 	if err != nil {
 		log.Panicf("open file: %v", err)
 	}
@@ -35,7 +42,14 @@ func main() {
 		log.Panicf("read config: %v", err)
 	}
 
-	pwe, err := pwextractor.New(cfg)
+	pwe, err := pwextractor.New(pwextractor.Config{
+		Proxy: cfg.Proxy,
+		DateParser: &dateparser.DateParser{
+			CurrentTimeFunc: func() time.Time {
+				return time.Date(2025, 01, 10, 10, 00, 00, 00, time.UTC)
+			},
+		},
+	})
 	if err != nil {
 		log.Panicf("create pw extractor: %v", err)
 	}
@@ -51,6 +65,7 @@ func main() {
 		scrResult, err := pwe.Screenshot(task)
 		if err != nil {
 			log.Errorf("screenshot failed: %v", err)
+			return
 		}
 		err = os.WriteFile("screenshot.png", scrResult.Image, 0600)
 		if err != nil {

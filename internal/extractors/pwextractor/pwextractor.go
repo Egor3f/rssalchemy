@@ -4,12 +4,12 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
-	"github.com/egor3f/rssalchemy/internal/config"
 	"github.com/egor3f/rssalchemy/internal/models"
 	"github.com/labstack/gommon/log"
 	"github.com/playwright-community/playwright-go"
 	"maps"
 	"strings"
+	"time"
 )
 
 // Timeouts
@@ -24,12 +24,22 @@ var (
 var userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36"
 var secChUa = `"Chromium";v="132", "Google Chrome";v="132", "Not-A.Brand";v="99"`
 
-type PwExtractor struct {
-	pw     *playwright.Playwright
-	chrome playwright.Browser
+type DateParser interface {
+	ParseDate(string) (time.Time, error)
 }
 
-func New(cfg config.Config) (*PwExtractor, error) {
+type PwExtractor struct {
+	pw         *playwright.Playwright
+	chrome     playwright.Browser
+	dateParser DateParser
+}
+
+type Config struct {
+	Proxy      string
+	DateParser DateParser
+}
+
+func New(cfg Config) (*PwExtractor, error) {
 	e := PwExtractor{}
 	var err error
 	e.pw, err = playwright.Run()
@@ -49,6 +59,7 @@ func New(cfg config.Config) (*PwExtractor, error) {
 	if err != nil {
 		return nil, fmt.Errorf("run chromium: %w", err)
 	}
+	e.dateParser = cfg.DateParser
 	return &e, nil
 }
 
@@ -140,8 +151,9 @@ func (e *PwExtractor) visitPage(task models.Task, cb func(page playwright.Page) 
 func (e *PwExtractor) Extract(task models.Task) (result *models.TaskResult, errRet error) {
 	errRet = e.visitPage(task, func(page playwright.Page) error {
 		parser := pageParser{
-			task: task,
-			page: page,
+			task:       task,
+			page:       page,
+			dateParser: e.dateParser,
 		}
 		var err error
 		result, err = parser.parse()
@@ -183,8 +195,9 @@ func (e *PwExtractor) Screenshot(task models.Task) (result *models.ScreenshotTas
 }
 
 type pageParser struct {
-	task models.Task
-	page playwright.Page
+	task       models.Task
+	page       playwright.Page
+	dateParser DateParser
 
 	// next fields only for debugging. Shit code, to do better later
 	postIdx  int
@@ -303,11 +316,11 @@ func (p *pageParser) extractPost(post playwright.Locator) (models.FeedItem, erro
 
 	createdDateStr := p.must(post.Locator(p.task.SelectorCreated).First().InnerText(defOptInText))
 	log.Debugf("date=%s", createdDateStr)
-	createdDate, err := parseDate(createdDateStr)
+	createdDate, err := p.dateParser.ParseDate(createdDateStr)
 	if err != nil {
 		log.Errorf("dateparser: %v", err)
 	} else {
-		item.Created = createdDate.Time
+		item.Created = createdDate
 	}
 
 	return item, nil

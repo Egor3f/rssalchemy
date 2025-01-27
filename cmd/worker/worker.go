@@ -6,12 +6,14 @@ import (
 	"fmt"
 	"github.com/egor3f/rssalchemy/internal/adapters/natsadapter"
 	"github.com/egor3f/rssalchemy/internal/config"
+	"github.com/egor3f/rssalchemy/internal/dateparser"
 	"github.com/egor3f/rssalchemy/internal/extractors/pwextractor"
 	"github.com/egor3f/rssalchemy/internal/models"
 	"github.com/labstack/gommon/log"
 	"github.com/nats-io/nats.go"
 	"os"
 	"os/signal"
+	"time"
 )
 
 func main() {
@@ -47,7 +49,12 @@ func main() {
 		log.Panicf("create nats adapter: %v", err)
 	}
 
-	pwe, err := pwextractor.New(cfg)
+	pwe, err := pwextractor.New(pwextractor.Config{
+		Proxy: cfg.Proxy,
+		DateParser: &dateparser.DateParser{
+			CurrentTimeFunc: time.Now,
+		},
+	})
 	if err != nil {
 		log.Panicf("create pw extractor: %v", err)
 	}
