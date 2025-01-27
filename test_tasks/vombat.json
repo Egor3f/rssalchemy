@@ -1,0 +1,13 @@
+{
+  "TaskType": "extract",
+  "URL": "https://vombat.su/new/all",
+  "SelectorPost": "div.post-body",
+  "SelectorTitle": "h1 a",
+  "SelectorLink": "h1 a",
+  "SelectorDescription": "div.post-content-block p",
+  "SelectorAuthor": "a:has(\u003e span.post-author)",
+  "SelectorCreated": "div:nth-of-type(1) \u003e div:nth-of-type(1) \u003e div:nth-of-type(1) \u003e div:nth-of-type(2)",
+  "SelectorContent": "div.post-content-block",
+  "SelectorEnclosure": "article img.object-contain",
+  "Headers": {}
+}
