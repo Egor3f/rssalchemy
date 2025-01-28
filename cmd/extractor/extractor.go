@@ -79,13 +79,13 @@ func main() {
 		scrResult, err := pwe.Screenshot(task)
 		if err != nil {
 			log.Errorf("screenshot failed: %v", err)
-			return
+			panic(err)
 		}
 		err = os.WriteFile("screenshot.png", scrResult.Image, 0600)
 		if err != nil {
 			log.Errorf("screenshot save failed: %v", err)
 		}
-		return
+		panic(err)
 	}
 
 	resultStr, err := json.MarshalIndent(result, "", "\t")
