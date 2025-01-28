@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	taskTimeout = 20 * time.Second
+	taskTimeout = 30 * time.Second
 	minLifetime = taskTimeout
 	maxLifetime = 24 * time.Hour
 )
