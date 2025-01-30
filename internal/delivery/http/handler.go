@@ -195,7 +195,9 @@ func makeFeed(task models.Task, result models.TaskResult) (string, error) {
 	atomFeed := (&feeds.Atom{Feed: &feed}).AtomFeed()
 	atomFeed.Icon = result.Icon
 	for i, entry := range atomFeed.Entries {
-		entry.Author.Uri = result.Items[i].AuthorLink
+		if entry.Author != nil {
+			entry.Author.Uri = result.Items[i].AuthorLink
+		}
 	}
 	atom, err := feeds.ToXML(atomFeed)
 	if err != nil {
