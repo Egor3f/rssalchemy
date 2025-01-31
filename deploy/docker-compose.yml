@@ -25,5 +25,7 @@ services:
 
   nats:
     image: nats:2.10
-    command: "-js"
+    command: "-config /nats_config.yml"
+    volumes:
+      - ./nats_config.yml:/nats_config.yml:ro
     restart: unless-stopped
