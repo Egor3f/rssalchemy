@@ -28,15 +28,22 @@ type DateParser interface {
 	ParseDate(string) (time.Time, error)
 }
 
+type CookieManager interface {
+	GetCookies(key string, cookieHeader string) ([][2]string, error)
+	UpdateCookies(key string, cookieHeader string, cookies [][2]string) error
+}
+
 type PwExtractor struct {
-	pw         *playwright.Playwright
-	chrome     playwright.Browser
-	dateParser DateParser
+	pw            *playwright.Playwright
+	chrome        playwright.Browser
+	dateParser    DateParser
+	cookieManager CookieManager
 }
 
 type Config struct {
-	Proxy      string
-	DateParser DateParser
+	Proxy         string
+	DateParser    DateParser
+	CookieManager CookieManager
 }
 
 func New(cfg Config) (*PwExtractor, error) {
@@ -59,7 +66,13 @@ func New(cfg Config) (*PwExtractor, error) {
 	if err != nil {
 		return nil, fmt.Errorf("run chromium: %w", err)
 	}
+
 	e.dateParser = cfg.DateParser
+	e.cookieManager = cfg.CookieManager
+	if e.dateParser == nil || e.cookieManager == nil {
+		panic("you fckd up with di again")
+	}
+
 	return &e, nil
 }
 
@@ -74,11 +87,21 @@ func (e *PwExtractor) Stop() error {
 }
 
 func (e *PwExtractor) visitPage(task models.Task, cb func(page playwright.Page) error) (errRet error) {
+
 	headers := maps.Clone(task.Headers)
 	headers["Sec-Ch-Ua"] = secChUa
+
 	var cookieStr string
+	var cookies [][2]string
 	if v, ok := headers["Cookie"]; ok {
 		cookieStr = v
+		var err error
+		cookies, err = e.cookieManager.GetCookies(task.URL, v)
+		if err != nil {
+			log.Errorf("cookie manager get: %v", err)
+			cookies = make([][2]string, 0)
+		}
+		log.Debugf("Found cookies: %v", cookies)
 		delete(headers, "Cookie")
 	}
 
@@ -95,17 +118,12 @@ func (e *PwExtractor) visitPage(task models.Task, cb func(page playwright.Page) 
 		}
 	}()
 
-	if len(cookieStr) > 0 {
-		cookies, err := parseCookieString(cookieStr)
-		if err != nil {
-			return fmt.Errorf("parsing cookies: %w", err)
-		}
+	baseDomain, scheme, err := parseBaseDomain(task.URL)
+	if err != nil {
+		return fmt.Errorf("parse base domain: %w", err)
+	}
 
-		baseDomain, err := parseBaseDomain(task.URL)
-		if err != nil {
-			return fmt.Errorf("parse base domain: %w", err)
-		}
-
+	if len(cookies) > 0 {
 		var pwCookies []playwright.OptionalCookie
 		for _, cook := range cookies {
 			pwCookies = append(pwCookies, playwright.OptionalCookie{
@@ -131,7 +149,7 @@ func (e *PwExtractor) visitPage(task models.Task, cb func(page playwright.Page) 
 			errRet = fmt.Errorf("close page: %w; other error=%w", err, errRet)
 		}
 	}()
-	log.Debugf("Page opened")
+	log.Debugf("Page created")
 
 	if len(task.Headers) > 0 {
 		if err := page.SetExtraHTTPHeaders(task.Headers); err != nil {
@@ -142,10 +160,30 @@ func (e *PwExtractor) visitPage(task models.Task, cb func(page playwright.Page) 
 	if _, err := page.Goto(task.URL, playwright.PageGotoOptions{Timeout: pwDuration("10s")}); err != nil {
 		return fmt.Errorf("goto page: %w", err)
 	}
-	log.Debugf("Url %s visited", task.URL)
-	defer log.Debugf("Visiting page %s finished", task.URL)
+	log.Debugf("Url %s visited, starting cb", task.URL)
 
-	return cb(page)
+	start := time.Now()
+	err = cb(page)
+	log.Debugf("Visiting page %s finished, time=%f secs, err=%v", task.URL, time.Since(start).Seconds(), err)
+
+	if len(cookies) > 0 {
+		bCookies, err := bCtx.Cookies(fmt.Sprintf("%s://%s", scheme, baseDomain))
+		if err != nil {
+			log.Errorf("browser context get cookies: %v", err)
+		} else {
+			newCookies := make([][2]string, len(bCookies))
+			for i, cook := range bCookies {
+				newCookies[i] = [2]string{cook.Name, cook.Value}
+			}
+			log.Debugf("Updating cookies: %v", newCookies)
+			err = e.cookieManager.UpdateCookies(task.URL, cookieStr, newCookies)
+			if err != nil {
+				log.Errorf("cookie manager update: %v", err)
+			}
+		}
+	}
+
+	return err
 }
 
 func (e *PwExtractor) Extract(task models.Task) (result *models.TaskResult, errRet error) {
@@ -175,7 +213,7 @@ func (e *PwExtractor) Screenshot(task models.Task) (result *models.ScreenshotTas
 			Timeout: pwDuration("5s"),
 		})
 		if err != nil {
-			log.Debugf("Wait for network idle: %w", err)
+			log.Debugf("Wait for network idle: %v", err)
 		}
 		if err := page.SetViewportSize(1280, 800); err != nil {
 			return fmt.Errorf("set viewport size: %w", err)

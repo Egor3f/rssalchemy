@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"github.com/egor3f/rssalchemy/internal/config"
+	dummycookies "github.com/egor3f/rssalchemy/internal/cookiemgr/dummy"
 	"github.com/egor3f/rssalchemy/internal/dateparser"
 	"github.com/egor3f/rssalchemy/internal/extractors/pwextractor"
 	"github.com/egor3f/rssalchemy/internal/models"
@@ -63,6 +64,7 @@ func main() {
 				return time.Date(2025, 01, 10, 10, 00, 00, 00, time.UTC)
 			},
 		},
+		CookieManager: dummycookies.New(),
 	})
 	if err != nil {
 		log.Panicf("create pw extractor: %v", err)
