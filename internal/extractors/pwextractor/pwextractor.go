@@ -14,11 +14,10 @@ import (
 
 // Timeouts
 var (
-	defTimeout    = "100ms"
+	defTimeout    = "50ms"
 	defOptInText  = playwright.LocatorInnerTextOptions{Timeout: pwDuration(defTimeout)}
 	defOptTextCon = playwright.LocatorTextContentOptions{Timeout: pwDuration(defTimeout)}
 	defOptAttr    = playwright.LocatorGetAttributeOptions{Timeout: pwDuration(defTimeout)}
-	defOptEval    = playwright.LocatorEvaluateOptions{Timeout: pwDuration(defTimeout)}
 )
 
 var userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36"
