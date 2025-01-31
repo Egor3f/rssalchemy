@@ -59,6 +59,7 @@ func (m *CookieManager) UpdateCookies(key string, oldCookieHeader string, cookie
 		return nil
 	}
 	newCookieValue := cookiemgr.EncodeCookieHeader(cookies)
+	log.Debugf("Updating cookies: %s", newCookieValue)
 	oldCookies, err := cookiemgr.ParseCookieHeader(oldCookieHeader)
 	if err != nil {
 		return fmt.Errorf("parse cookie header: %w", err)
