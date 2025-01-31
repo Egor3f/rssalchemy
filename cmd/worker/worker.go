@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/egor3f/rssalchemy/internal/adapters/natsadapter"
 	"github.com/egor3f/rssalchemy/internal/config"
+	natscookies "github.com/egor3f/rssalchemy/internal/cookiemgr/nats"
 	"github.com/egor3f/rssalchemy/internal/dateparser"
 	"github.com/egor3f/rssalchemy/internal/extractors/pwextractor"
 	"github.com/egor3f/rssalchemy/internal/models"
@@ -49,11 +50,17 @@ func main() {
 		log.Panicf("create nats adapter: %v", err)
 	}
 
+	cookieManager, err := natscookies.New(natsc)
+	if err != nil {
+		log.Panicf("create cookie manager: %v", err)
+	}
+
 	pwe, err := pwextractor.New(pwextractor.Config{
 		Proxy: cfg.Proxy,
 		DateParser: &dateparser.DateParser{
 			CurrentTimeFunc: time.Now,
 		},
+		CookieManager: cookieManager,
 	})
 	if err != nil {
 		log.Panicf("create pw extractor: %v", err)

@@ -53,31 +53,16 @@ func parseProxy(s string) (*playwright.Proxy, error) {
 	return proxy, nil
 }
 
-func parseBaseDomain(urlStr string) (string, error) {
+func parseBaseDomain(urlStr string) (domain string, scheme string, err error) {
 	pageUrl, err := url.Parse(urlStr)
 	if err != nil {
-		return "", fmt.Errorf("task url parsing: %w", err)
+		return "", "", fmt.Errorf("task url parsing: %w", err)
 	}
 	domainParts := strings.Split(pageUrl.Host, ".")
 	slices.Reverse(domainParts) // com, example, www
-	return fmt.Sprintf("%s.%s", domainParts[1], domainParts[0]), nil
-}
-
-func parseCookieString(cookieStr string) ([][2]string, error) {
-	var result [][2]string
-
-	for _, cook := range strings.Split(cookieStr, ";") {
-		kv := strings.Split(cook, "=")
-		if len(kv) < 2 {
-			return nil, fmt.Errorf("failed to parse cookies: split by =: count<2")
-		}
-		k, err1 := url.QueryUnescape(kv[0])
-		v, err2 := url.QueryUnescape(strings.Join(kv[1:], "="))
-		if err1 != nil || err2 != nil {
-			return nil, fmt.Errorf("failed to parse cookies: unescape k=%w v=%w", err1, err2)
-		}
-		result = append(result, [2]string{strings.TrimSpace(k), strings.TrimSpace(v)})
+	scheme = pageUrl.Scheme
+	if !slices.Contains([]string{"https", "http"}, scheme) {
+		return "", "", fmt.Errorf("bad scheme: %s", scheme)
 	}
-
-	return result, nil
+	return fmt.Sprintf("%s.%s", domainParts[1], domainParts[0]), scheme, nil
 }
