@@ -174,7 +174,6 @@ func (e *PwExtractor) visitPage(task models.Task, cb func(page playwright.Page) 
 			for i, cook := range bCookies {
 				newCookies[i] = [2]string{cook.Name, cook.Value}
 			}
-			log.Debugf("Updating cookies: %v", newCookies)
 			err = e.cookieManager.UpdateCookies(task.URL, cookieStr, newCookies)
 			if err != nil {
 				log.Errorf("cookie manager update: %v", err)
