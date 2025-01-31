@@ -151,10 +151,7 @@ func (na *NatsAdapter) ConsumeQueue(
 		}
 
 		if taskErr != nil {
-			log.Errorf("taskFunc seq=%d error, discarding task: %v", seq, taskErr)
-			if err := msg.Term(); err != nil {
-				log.Errorf("nak %d: %v", seq, err)
-			}
+			log.Errorf("taskFunc seq=%d error: %v", seq, taskErr)
 			return
 		}
 
