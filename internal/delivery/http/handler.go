@@ -182,7 +182,22 @@ func makeFeed(task models.Task, result models.TaskResult) (string, error) {
 		Updated: feedTS,
 	}
 	for _, item := range result.Items {
+		itemUrl, err := url.Parse(item.Link)
+		if err != nil {
+			log.Errorf("Invalid item link, item=%+v", item)
+			continue
+		}
+		id := fmt.Sprintf(
+			"tag:%s,%s:%s",
+			itemUrl.Host,
+			anyTimeFormat("2006-01-02", item.Created, item.Updated),
+			itemUrl.Path,
+		)
+		if len(itemUrl.RawQuery) > 0 {
+			id += "?" + itemUrl.RawQuery
+		}
 		feed.Items = append(feed.Items, &feeds.Item{
+			Id:          id,
 			Title:       html.EscapeString(item.Title),
 			Link:        &feeds.Link{Href: item.Link},
 			Author:      &feeds.Author{Name: item.AuthorName},
@@ -191,6 +206,9 @@ func makeFeed(task models.Task, result models.TaskResult) (string, error) {
 			Updated:     item.Updated,
 			Content:     item.Content,
 		})
+	}
+	if len(feed.Items) == 0 {
+		return "", fmt.Errorf("empty feed")
 	}
 	atomFeed := (&feeds.Atom{Feed: &feed}).AtomFeed()
 	atomFeed.Icon = result.Icon
@@ -214,4 +232,14 @@ func extractHeaders(c echo.Context) map[string]string {
 		}
 	}
 	return headers
+}
+
+// returns the first non-zero time formatted as a string or ""
+func anyTimeFormat(format string, times ...time.Time) string {
+	for _, t := range times {
+		if !t.IsZero() {
+			return t.Format(format)
+		}
+	}
+	return ""
 }
