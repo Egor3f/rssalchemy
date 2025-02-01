@@ -25,7 +25,11 @@ services:
 
   nats:
     image: nats:2.10
-    command: "-config /nats_config.yml"
+    command: "-config /nats_config.conf"
     volumes:
-      - ./nats_config.yml:/nats_config.yml:ro
+      - ./nats_config.conf:/nats_config.conf:ro
+      - natsdata:/data
     restart: unless-stopped
+
+volumes:
+  natsdata:
