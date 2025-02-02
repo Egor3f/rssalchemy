@@ -287,7 +287,7 @@ func (p *pageParser) parse() (*models.TaskResult, error) {
 			log.Errorf("extract post fields: %v", err)
 			continue
 		}
-		if len(item.Title) == 0 || len(item.Link) == 0 {
+		if len(item.Title) == 0 || len(item.Link) == 0 || item.Created.IsZero() {
 			log.Warnf("post has no required fields, skip")
 			continue
 		}
