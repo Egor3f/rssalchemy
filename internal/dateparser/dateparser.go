@@ -1,6 +1,7 @@
 package dateparser
 
 import (
+	"fmt"
 	godateparser "github.com/markusmobius/go-dateparser"
 	"strings"
 	"time"
@@ -12,6 +13,10 @@ type DateParser struct {
 
 func (d *DateParser) ParseDate(str string) (time.Time, error) {
 	str = strings.TrimSpace(str)
+
+	if len(str) == 0 {
+		return time.Time{}, fmt.Errorf("date string is empty")
+	}
 
 	dt, err := godateparser.Parse(&godateparser.Configuration{
 		CurrentTime: d.CurrentTimeFunc(),
