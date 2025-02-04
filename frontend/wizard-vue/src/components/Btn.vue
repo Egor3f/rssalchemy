@@ -1,17 +1,20 @@
 <script setup lang="ts">
   const {active} = defineProps({
-    active: Boolean
+    active: {
+      type: Boolean,
+      default: true
+    }
   });
 </script>
 
 <template>
-  <div class="wrapper" :class="{active: active}">
+  <div class="btn-wrapper" :class="{active: active}">
     <slot></slot>
   </div>
 </template>
 
 <style scoped lang="scss">
-div.wrapper {
+div.btn-wrapper {
   display: inline-block;
   border-radius: 4px;
   margin: 4px 8px 0 0;

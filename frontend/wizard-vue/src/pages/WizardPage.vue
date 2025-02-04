@@ -4,6 +4,7 @@ import {reactive, ref, watch} from "vue";
 import {type Field, fields, type Specs} from "@/urlmaker/specs.ts";
 import Btn from "@/components/Btn.vue";
 import Copyable from "@/components/Copyable.vue";
+import EditUrlModal from "@/components/EditUrlModal.vue";
 
 const emptySpecs = fields.reduce((o, f) => {
   o[f.name] = f.default;
@@ -18,21 +19,35 @@ watch(specs, (value, oldValue) => {
   ));
 });
 
-const link = ref("https://kek.com");
+const existingLink = ref("");
+const link = ref("");
+const editModalVisible = ref(false);
 
 </script>
 
 <template>
-  <SpecsForm v-model="specs" class="specs-form"></SpecsForm>
-  <Btn :active="formValid">Generate link</Btn>
-  <Btn :active="formValid">Screenshot</Btn>
-  <Copyable v-if="link" :contents="link" class="link-view"></Copyable>
+  <div class="wrapper">
+    <SpecsForm v-model="specs" class="specs-form"></SpecsForm>
+    <Btn :active="formValid">Generate link</Btn>
+    <Btn :active="formValid">Screenshot</Btn>
+    <Btn @click="editModalVisible = true">Edit existing task</Btn>
+    <Copyable v-if="link" :contents="link" class="link-view"></Copyable>
+    <EditUrlModal :visible="editModalVisible" @close="editModalVisible = false"
+                  v-model="existingLink"></EditUrlModal>
+  </div>
 </template>
 
 <style scoped lang="scss">
+div.wrapper {
+  width: 100%;
+  max-width: 600px;
+  margin: auto;
+}
+
 .specs-form {
   margin-bottom: 15px;
 }
+
 .link-view {
   margin-top: 15px !important;
 }
