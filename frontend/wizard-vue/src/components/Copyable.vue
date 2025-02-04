@@ -41,6 +41,8 @@ div.copyable {
   span.contents {
     flex: 1;
     padding: 4px;
+    overflow: hidden;
+    text-align: left;
   }
 
   span.copy {

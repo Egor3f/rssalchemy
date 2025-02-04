@@ -5,6 +5,7 @@ import {type Field, fields, type Specs} from "@/urlmaker/specs.ts";
 import Btn from "@/components/Btn.vue";
 import Copyable from "@/components/Copyable.vue";
 import EditUrlModal from "@/components/EditUrlModal.vue";
+import {decodeUrl, encodeUrl} from "@/urlmaker";
 
 const emptySpecs = fields.reduce((o, f) => {
   o[f.name] = f.default;
@@ -13,9 +14,9 @@ const emptySpecs = fields.reduce((o, f) => {
 const specs = reactive(emptySpecs);
 const formValid = ref(false);
 
-watch(specs, (value, oldValue) => {
+watch(specs, (value) => {
   formValid.value = fields.every(field => (
-    specs[field.name].length === 0 && !(field as Field).required || field.validate(specs[field.name]).ok
+    value[field.name].length === 0 && !(field as Field).required || field.validate(value[field.name]).ok
   ));
 });
 
@@ -23,12 +24,33 @@ const existingLink = ref("");
 const link = ref("");
 const editModalVisible = ref(false);
 
+watch(existingLink, async (value) => {
+  if(!value) return;
+  existingLink.value = "";
+  try {
+    Object.assign(specs, await decodeUrl(value));
+    link.value = "";
+  } catch (e) {
+    console.log(e);
+    alert(`Decoding error: ${e}`);
+  }
+});
+
+async function generateLink() {
+  try {
+    link.value = await encodeUrl(specs);
+  } catch (e) {
+    console.log(e);
+    alert(`Encoding error: ${e}`);
+  }
+}
+
 </script>
 
 <template>
   <div class="wrapper">
     <SpecsForm v-model="specs" class="specs-form"></SpecsForm>
-    <Btn :active="formValid">Generate link</Btn>
+    <Btn :active="formValid" @click="generateLink">Generate link</Btn>
     <Btn :active="formValid">Screenshot</Btn>
     <Btn @click="editModalVisible = true">Edit existing task</Btn>
     <Copyable v-if="link" :contents="link" class="link-view"></Copyable>
