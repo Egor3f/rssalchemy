@@ -5,7 +5,7 @@ import {type Field, fields, type Specs} from "@/urlmaker/specs.ts";
 import Btn from "@/components/Btn.vue";
 import Copyable from "@/components/Copyable.vue";
 import EditUrlModal from "@/components/EditUrlModal.vue";
-import {decodeUrl, encodeUrl} from "@/urlmaker";
+import {decodeUrl, encodeUrl, getScreenshotUrl} from "@/urlmaker";
 
 const emptySpecs = fields.reduce((o, f) => {
   o[f.name] = f.default;
@@ -45,13 +45,17 @@ async function generateLink() {
   }
 }
 
+function screenshot() {
+  window.open(getScreenshotUrl(specs.url));
+}
+
 </script>
 
 <template>
   <div class="wrapper">
     <SpecsForm v-model="specs" class="specs-form"></SpecsForm>
     <Btn :active="formValid" @click="generateLink">Generate link</Btn>
-    <Btn :active="formValid">Screenshot</Btn>
+    <Btn :active="formValid" @click="screenshot">Screenshot</Btn>
     <Btn @click="editModalVisible = true">Edit existing task</Btn>
     <Copyable v-if="link" :contents="link" class="link-view"></Copyable>
     <EditUrlModal :visible="editModalVisible" @close="editModalVisible = false"
