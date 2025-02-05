@@ -4,7 +4,7 @@ import {getCurrentInstance, onMounted, useTemplateRef} from "vue";
 
 const {field, focused} = defineProps<{
   field: Field,
-  focused: boolean,
+  focused?: boolean,
 }>();
 const id = 'field' + getCurrentInstance()?.uid;
 const model = defineModel();
