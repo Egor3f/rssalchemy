@@ -1,9 +1,11 @@
 import type {Specs} from "@/urlmaker/specs.ts";
 
-const apiEndpoint = '/api/v1/render/';
+const apiBase = import.meta.env.VITE_API_BASE || document.location.origin;
+const renderEndpoint = '/api/v1/render/';
+const screenshotEndpoint = `/api/v1/screenshot/`;
 
 export async function decodeUrl(url: string): Promise<Specs> {
-  const splitUrl = url.split(apiEndpoint);
+  const splitUrl = url.split(renderEndpoint);
   if(splitUrl.length !== 2) {
     throw 'Split failed';
   }
@@ -31,11 +33,17 @@ export async function encodeUrl(specs: Specs): Promise<string> {
   const encodedData = b64encode(buf);
   console.log('Data len=' + encodedData.length);
   const version = 0;
-  return `${document.location.origin}${apiEndpoint}${version}:${encodedData}`
+  return `${apiBase}${renderEndpoint}${version}:${encodedData}`
+}
+
+export function getScreenshotUrl(url: string): string {
+  return `${apiBase}${screenshotEndpoint}?url=${url}`;
 }
 
 function b64encode(buf: Uint8Array): string {
+  // @ts-ignore
   const b64str = btoa(String.fromCharCode.apply(null, buf));
+  // @ts-ignore
   return b64str.replaceAll('=', '');
 }
 
