@@ -37,7 +37,7 @@ export async function encodeUrl(specs: Specs): Promise<string> {
 }
 
 export function getScreenshotUrl(url: string): string {
-  return `${apiBase}${screenshotEndpoint}?url=${url}`;
+  return `${apiBase}${screenshotEndpoint}?url=${encodeURIComponent(url)}`;
 }
 
 function b64encode(buf: Uint8Array): string {
