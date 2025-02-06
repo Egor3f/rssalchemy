@@ -17,6 +17,8 @@ import (
 	"html"
 	"io"
 	"net/url"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -152,6 +154,20 @@ func (h *Handler) handlePageScreenshot(c echo.Context) error {
 }
 
 func (h *Handler) decodeSpecs(specsParam string) (Specs, error) {
+	var err error
+	version := 0
+	paramSplit := strings.Split(specsParam, ":")
+	if len(paramSplit) == 2 {
+		version, err = strconv.Atoi(paramSplit[0])
+		if err != nil {
+			return Specs{}, fmt.Errorf("invalid version: %s", paramSplit[0])
+		}
+	}
+
+	if version != 0 {
+		return Specs{}, fmt.Errorf("unknown version: %d", version)
+	}
+
 	decodedSpecsParam, err := base64.StdEncoding.WithPadding(base64.NoPadding).DecodeString(specsParam)
 	if err != nil {
 		return Specs{}, fmt.Errorf("failed to decode specs: %w", err)
