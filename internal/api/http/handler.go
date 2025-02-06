@@ -162,6 +162,7 @@ func (h *Handler) decodeSpecs(specsParam string) (Specs, error) {
 		if err != nil {
 			return Specs{}, fmt.Errorf("invalid version: %s", paramSplit[0])
 		}
+		specsParam = paramSplit[1]
 	}
 
 	if version != 0 {
