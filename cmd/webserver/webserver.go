@@ -2,9 +2,10 @@ package main
 
 import (
 	"context"
+	wizard_vue "github.com/egor3f/rssalchemy/frontend/wizard-vue"
 	"github.com/egor3f/rssalchemy/internal/adapters/natsadapter"
+	httpApi "github.com/egor3f/rssalchemy/internal/api/http"
 	"github.com/egor3f/rssalchemy/internal/config"
-	httpApi "github.com/egor3f/rssalchemy/internal/delivery/http"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
@@ -47,7 +48,8 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	e.Static("/", "frontend/wizard")
+
+	e.StaticFS("/", echo.MustSubFS(wizard_vue.EmbedFS, wizard_vue.FSPrefix))
 
 	apiHandler := httpApi.New(cq)
 	apiHandler.SetupRoutes(e.Group("/api/v1"))
