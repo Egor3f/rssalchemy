@@ -16,9 +16,10 @@ RSS Alchemy is a website-to-rss converter, like RSSHub, RSS-bridge or Rss.app. H
 - Relatively small codebase, written in go + typescript
 
 [^1]: Cookies require support from your RSS reader/aggregator. Miniflux works, others are not checked yet.
-[^2]: Nats KV is used to store cookies permanently, it's required for sites that update cookies on every request, like youtube 
+[^2]: Nats KV is used to store cookies permanently, it's required for sites that update cookies on every request, like
+youtube
 
-| program/feature      | RSS Alchemy               | RSS Hub                      | RSS-Bridge              | RSS.app       |
+| feature/program      | RSS Alchemy               | RSS Hub                      | RSS-Bridge              | RSS.app       |
 |----------------------|---------------------------|------------------------------|-------------------------|---------------|
 | Custom websites      | ✅ (using CSS selectors)   | ❌ (only hardcoded site list) | ✅ (using CSS selectors) | ✅             |
 | Render dynamic sites | ✅ (using headless chrome) | ❌                            | ❌                       | ✅             |
@@ -26,4 +27,6 @@ RSS Alchemy is a website-to-rss converter, like RSSHub, RSS-bridge or Rss.app. H
 | Price                | Free and open-source      | Free and open-source         | Free and open-source    | Paid ($8/mon) |
 
 ## Project status
-Program is still under development. The code architecture is not final, tests are missing, no CI, no demo page, no docs, etc...
+
+Program is still under development. The code architecture is not final, tests are missing, no CI, no demo page, no docs,
+etc...
