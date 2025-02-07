@@ -40,7 +40,7 @@ func main() {
 		}
 	}()
 
-	cq, err := natsadapter.New(natsc)
+	cq, err := natsadapter.New(natsc, "RENDER_TASKS")
 	if err != nil {
 		log.Panicf("create nats adapter: %v", err)
 	}
