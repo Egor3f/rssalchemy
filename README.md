@@ -30,3 +30,25 @@ youtube
 
 Program is still under development. The code architecture is not final, tests are missing, no CI, no demo page, no docs,
 etc...
+
+## Deployment
+
+```bash
+git clone https://github.com/egor3f/rssalchemy
+cd rssalchemy/deploy
+docker-compose up -d
+```
+
+Then open your browser targeting to port 8080.
+
+For SSL, authentication, domains, etc. - use Caddy or Nginx (no specific configuration required). Personally I recommend Caddy, if you haven't used it before - give it a try :)
+
+### Configuration
+
+Configuration is done using [config.yml](config.yml) file or env vars 
+
+Env vars always has precedence over config.yml
+
+Docker-compose deployment uses [deploy/.env file](deploy/.env)
+
+You can see all available options in [config.go file](internal/config/config.go) (struct Config)
