@@ -52,3 +52,21 @@ Env vars always has precedence over config.yml
 Docker-compose deployment uses [deploy/.env file](deploy/.env)
 
 You can see all available options in [config.go file](internal/config/config.go) (struct Config)
+
+## Development
+
+You need Go 1.23 (most of application) and Node.js 20 (frontend)
+
+Instaling dependencies example for MacOS:
+
+```bash
+brew install go@1.23
+brew install node@20
+go mod download
+cd frontend/wizard-vue && npm install
+```
+
+Also this repository contains some useful git hooks. To enable them, use:
+```bash
+git config --local core.hooksPath .githooks/
+```
