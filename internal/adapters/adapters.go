@@ -2,16 +2,19 @@ package adapters
 
 import (
 	"context"
+	"fmt"
 	"time"
 )
 
-type CachedWorkQueue interface {
-	ProcessWorkCached(
-		ctx context.Context,
-		cacheLifetime time.Duration,
-		cacheKey string,
-		taskPayload []byte,
-	) (result []byte, err error)
+type WorkQueue interface {
+	Enqueue(ctx context.Context, key string, payload []byte) (result []byte, err error)
+}
+
+var ErrKeyNotFound = fmt.Errorf("key not found")
+
+type Cache interface {
+	Get(key string) (result []byte, ts time.Time, err error)
+	Set(key string, payload []byte) (err error)
 }
 
 type QueueConsumer interface {
