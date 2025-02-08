@@ -2,7 +2,9 @@ package natsadapter
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/egor3f/rssalchemy/internal/adapters"
 	"github.com/labstack/gommon/log"
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
@@ -56,65 +58,74 @@ func New(natsc *nats.Conn, streamName string) (*NatsAdapter, error) {
 	return &na, nil
 }
 
-func (na *NatsAdapter) ProcessWorkCached(
-	ctx context.Context,
-	cacheLifetime time.Duration,
-	cacheKey string,
-	taskPayload []byte,
-) (result []byte, err error) {
-
+func (na *NatsAdapter) Enqueue(ctx context.Context, key string, payload []byte) ([]byte, error) {
 	// prevent resubmitting already running task
 	na.runningMu.Lock()
-	_, alreadyRunning := na.running[cacheKey]
-	na.running[cacheKey] = struct{}{}
+	_, alreadyRunning := na.running[key]
+	na.running[key] = struct{}{}
 	na.runningMu.Unlock()
 	defer func() {
 		na.runningMu.Lock()
-		delete(na.running, cacheKey)
+		delete(na.running, key)
 		na.runningMu.Unlock()
 	}()
 
-	watcher, err := na.kv.Watch(ctx, cacheKey)
+	watcher, err := na.kv.Watch(ctx, key)
 	if err != nil {
-		return nil, fmt.Errorf("cache watch failed: %w", err)
+		return nil, fmt.Errorf("nats watch failed: %w", err)
 	}
 	defer watcher.Stop()
 
-	var lastUpdate jetstream.KeyValueEntry
+	var taskEnqueued bool
 	for {
 		select {
 		case upd := <-watcher.Updates():
 			if upd != nil {
-				lastUpdate = upd
-				if time.Since(upd.Created()) <= cacheLifetime {
-					log.Infof("using cached value for task: %s, payload=%.100s", cacheKey, lastUpdate.Value())
-					return lastUpdate.Value(), nil
+				if !taskEnqueued {
+					// old value from cache, skipping
+					continue
 				}
-			} else {
-				if alreadyRunning {
-					log.Infof("already running: %s", cacheKey)
-				} else {
-					log.Infof("sending task to queue: %s", cacheKey)
-					_, err = na.jets.Publish(
-						ctx,
-						fmt.Sprintf("%s.%s", na.streamName, cacheKey),
-						taskPayload,
-					)
-					if err != nil {
-						return nil, fmt.Errorf("nats publish error: %v", err)
-					}
-				}
+				log.Infof("got value for task: %s, payload=%.100s", key, upd.Value())
+				return upd.Value(), nil
+			}
+			taskEnqueued = true
+			if alreadyRunning {
+				log.Infof("already running: %s", key)
+				continue
+			}
+			log.Infof("sending task to queue: %s", key)
+			_, err = na.jets.Publish(
+				ctx,
+				fmt.Sprintf("%s.%s", na.streamName, key),
+				payload,
+			)
+			if err != nil {
+				return nil, fmt.Errorf("nats publish error: %v", err)
 			}
 		case <-ctx.Done():
-			log.Warnf("task cancelled by context: %s", cacheKey)
-			// anyway, using cached lastUpdate
-			if lastUpdate != nil {
-				return lastUpdate.Value(), ctx.Err()
-			} else {
-				return nil, ctx.Err()
-			}
+			log.Warnf("task cancelled by context: %s", key)
+			return nil, ctx.Err()
 		}
 	}
+}
+
+func (na *NatsAdapter) Get(key string) (result []byte, ts time.Time, err error) {
+	entry, err := na.kv.Get(context.TODO(), key)
+	if err != nil {
+		if errors.Is(err, jetstream.ErrKeyNotFound) {
+			return nil, time.Time{}, adapters.ErrKeyNotFound
+		}
+		return nil, time.Time{}, fmt.Errorf("nats: %w", err)
+	}
+	return entry.Value(), entry.Created(), nil
+}
+
+func (na *NatsAdapter) Set(key string, payload []byte) error {
+	_, err := na.kv.Put(context.TODO(), key, payload)
+	if err != nil {
+		return fmt.Errorf("nats: %w", err)
+	}
+	return nil
 }
 
 func (na *NatsAdapter) ConsumeQueue(

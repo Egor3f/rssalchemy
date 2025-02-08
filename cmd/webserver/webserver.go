@@ -40,7 +40,7 @@ func main() {
 		}
 	}()
 
-	cq, err := natsadapter.New(natsc, "RENDER_TASKS")
+	na, err := natsadapter.New(natsc, "RENDER_TASKS")
 	if err != nil {
 		log.Panicf("create nats adapter: %v", err)
 	}
@@ -51,7 +51,7 @@ func main() {
 
 	e.StaticFS("/", echo.MustSubFS(wizard_vue.EmbedFS, wizard_vue.FSPrefix))
 
-	apiHandler := httpApi.New(cq)
+	apiHandler := httpApi.New(na, na)
 	apiHandler.SetupRoutes(e.Group("/api/v1"))
 
 	go func() {

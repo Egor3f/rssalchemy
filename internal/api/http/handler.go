@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/egor3f/rssalchemy/internal/adapters"
 	"github.com/egor3f/rssalchemy/internal/models"
@@ -23,18 +24,22 @@ import (
 )
 
 const (
-	taskTimeout = 45 * time.Second
+	taskTimeout = 1 * time.Minute
 	minLifetime = taskTimeout
 	maxLifetime = 24 * time.Hour
 )
 
 type Handler struct {
-	validate    *validator.Validate
-	CachedQueue adapters.CachedWorkQueue
+	validate  *validator.Validate
+	workQueue adapters.WorkQueue
+	cache     adapters.Cache
 }
 
-func New(cq adapters.CachedWorkQueue) *Handler {
-	h := Handler{CachedQueue: cq}
+func New(wq adapters.WorkQueue, cache adapters.Cache) *Handler {
+	if wq == nil || cache == nil {
+		panic("you fckd up with di again")
+	}
+	h := Handler{workQueue: wq, cache: cache}
 	h.validate = validator.New(validator.WithRequiredStructEnabled())
 	if err := h.validate.RegisterValidation("selector", validators.ValidateSelector); err != nil {
 		log.Panicf("register validation: %v", err)
@@ -100,9 +105,15 @@ func (h *Handler) handleRender(c echo.Context) error {
 		return echo.NewHTTPError(500, fmt.Errorf("task marshal error: %v", err))
 	}
 
-	taskResultBytes, err := h.CachedQueue.ProcessWorkCached(timeoutCtx, cacheLifetime, task.CacheKey(), encodedTask)
-	if err != nil {
-		return echo.NewHTTPError(500, fmt.Errorf("queued cache failed: %v", err))
+	taskResultBytes, cachedTS, err := h.cache.Get(task.CacheKey())
+	if err != nil && !errors.Is(err, adapters.ErrKeyNotFound) {
+		return echo.NewHTTPError(500, fmt.Errorf("cache failed: %v", err))
+	}
+	if errors.Is(err, adapters.ErrKeyNotFound) || time.Since(cachedTS) > cacheLifetime {
+		taskResultBytes, err = h.workQueue.Enqueue(timeoutCtx, task.CacheKey(), encodedTask)
+		if err != nil {
+			return echo.NewHTTPError(500, fmt.Errorf("task enqueue failed: %v", err))
+		}
 	}
 
 	var result models.TaskResult
@@ -140,8 +151,7 @@ func (h *Handler) handlePageScreenshot(c echo.Context) error {
 		return echo.NewHTTPError(500, fmt.Errorf("task marshal error: %v", err))
 	}
 
-	cacheLifetime := minLifetime
-	taskResultBytes, err := h.CachedQueue.ProcessWorkCached(timeoutCtx, cacheLifetime, task.CacheKey(), encodedTask)
+	taskResultBytes, err := h.workQueue.Enqueue(timeoutCtx, task.CacheKey(), encodedTask)
 	if err != nil {
 		return echo.NewHTTPError(500, fmt.Errorf("queued cache failed: %v", err))
 	}
