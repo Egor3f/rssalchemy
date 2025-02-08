@@ -53,17 +53,23 @@ Docker-compose deployment uses [deploy/.env file](deploy/.env)
 
 You can see all available options in [config.go file](internal/config/config.go) (struct Config)
 
+### Scaling
+
+Each worker can process 1 page at a time, so to scale you should run multiple worker instances. This is done using replicas parameter in worker section in [docker-compose.yml file](deploy/docker-compose.yml)
+
 ## Development
 
-You need Go 1.23 (most of application) and Node.js 20 (frontend)
+You need Go 1.23 (most of application), Node.js 20 (frontend) and Nats server.
 
 Instaling dependencies example for MacOS:
 
 ```bash
 brew install go@1.23
 brew install node@20
+brew install nats-server  # Don't use brew services to manage nats because it lacks config support
 go mod download
 cd frontend/wizard-vue && npm install
+nats -js
 ```
 
 Also this repository contains some useful git hooks. To enable them, use:
