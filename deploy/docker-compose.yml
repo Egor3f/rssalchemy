@@ -21,6 +21,8 @@ services:
     user: pwuser
     security_opt:
       - seccomp:seccomp_profile.json
+    deploy:
+      replicas: 1
     restart: unless-stopped
 
   nats:
