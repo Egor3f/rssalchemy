@@ -1,8 +1,8 @@
 import type {Specs} from "@/urlmaker/specs.ts";
 
 const apiBase = import.meta.env.VITE_API_BASE || document.location.origin;
-const renderEndpoint = '/api/v1/render/';
-const screenshotEndpoint = `/api/v1/screenshot/`;
+const renderEndpoint = '/api/v1/render/';  // trailing slash
+const screenshotEndpoint = '/api/v1/screenshot';  // no trailing slash
 
 export async function decodeUrl(url: string): Promise<Specs> {
   const splitUrl = url.split(renderEndpoint);
