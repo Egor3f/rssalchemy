@@ -75,7 +75,9 @@ func main() {
 		}
 	}()
 
+	start := time.Now()
 	result, err := pwe.Extract(task)
+	log.Infof("Extract took %v ms", time.Since(start).Milliseconds())
 	if err != nil {
 		log.Errorf("extract: %v", err)
 		scrResult, err := pwe.Screenshot(task)
