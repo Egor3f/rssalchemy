@@ -15,11 +15,13 @@ import (
 	"github.com/gorilla/feeds"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
+	"golang.org/x/time/rate"
 	"html"
 	"io"
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -30,16 +32,26 @@ const (
 )
 
 type Handler struct {
-	validate  *validator.Validate
-	workQueue adapters.WorkQueue
-	cache     adapters.Cache
+	validate       *validator.Validate
+	workQueue      adapters.WorkQueue
+	cache          adapters.Cache
+	rateLimit      rate.Limit
+	rateLimitBurst int
+	limits         map[string]*rate.Limiter
+	limitsMu       sync.RWMutex
 }
 
-func New(wq adapters.WorkQueue, cache adapters.Cache) *Handler {
+func New(wq adapters.WorkQueue, cache adapters.Cache, rateLimit rate.Limit, rateLimitBurst int) *Handler {
 	if wq == nil || cache == nil {
 		panic("you fckd up with di again")
 	}
-	h := Handler{workQueue: wq, cache: cache}
+	h := Handler{
+		workQueue:      wq,
+		cache:          cache,
+		rateLimit:      rateLimit,
+		rateLimitBurst: rateLimitBurst,
+		limits:         make(map[string]*rate.Limiter),
+	}
 	h.validate = validator.New(validator.WithRequiredStructEnabled())
 	if err := h.validate.RegisterValidation("selector", validators.ValidateSelector); err != nil {
 		log.Panicf("register validation: %v", err)
@@ -110,6 +122,9 @@ func (h *Handler) handleRender(c echo.Context) error {
 		return echo.NewHTTPError(500, fmt.Errorf("cache failed: %v", err))
 	}
 	if errors.Is(err, adapters.ErrKeyNotFound) || time.Since(cachedTS) > cacheLifetime {
+		if !h.checkRateLimit(c) {
+			return echo.ErrTooManyRequests
+		}
 		taskResultBytes, err = h.workQueue.Enqueue(timeoutCtx, task.CacheKey(), encodedTask)
 		if err != nil {
 			return echo.NewHTTPError(500, fmt.Errorf("task enqueue failed: %v", err))
@@ -151,6 +166,10 @@ func (h *Handler) handlePageScreenshot(c echo.Context) error {
 		return echo.NewHTTPError(500, fmt.Errorf("task marshal error: %v", err))
 	}
 
+	if !h.checkRateLimit(c) {
+		return echo.ErrTooManyRequests
+	}
+
 	taskResultBytes, err := h.workQueue.Enqueue(timeoutCtx, task.CacheKey(), encodedTask)
 	if err != nil {
 		return echo.NewHTTPError(500, fmt.Errorf("queued cache failed: %v", err))
@@ -161,6 +180,23 @@ func (h *Handler) handlePageScreenshot(c echo.Context) error {
 		return echo.NewHTTPError(500, fmt.Errorf("task result unmarshal failed: %v", err))
 	}
 	return c.Blob(200, "image/png", result.Image)
+}
+
+func (h *Handler) checkRateLimit(c echo.Context) bool {
+	h.limitsMu.RLock()
+	limiter, ok := h.limits[c.RealIP()]
+	h.limitsMu.RUnlock()
+	if !ok {
+		h.limitsMu.Lock()
+		limiter, ok = h.limits[c.RealIP()]
+		if !ok {
+			limiter = rate.NewLimiter(h.rateLimit, h.rateLimitBurst)
+			h.limits[c.RealIP()] = limiter
+		}
+		h.limitsMu.Unlock()
+	}
+	log.Debugf("Rate limiter for ip=%s tokens=%f", c.RealIP(), limiter.Tokens())
+	return limiter.Allow()
 }
 
 func (h *Handler) decodeSpecs(specsParam string) (Specs, error) {

@@ -10,10 +10,17 @@ import (
 )
 
 type Config struct {
+	// Format: host:port
 	WebserverAddress string `env:"WEBSERVER_ADDRESS" env-default:"0.0.0.0:5000" validate:"hostname_port"`
 	NatsUrl          string `env:"NATS_URL" env-default:"nats://localhost:4222" validate:"url"`
 	Debug            bool   `env:"DEBUG"`
-	Proxy            string `env:"PROXY" env-default:"" validate:"omitempty,proxy"`
+	// Format: scheme://user:pass@host:port (supported schemes: http, https, socks)
+	Proxy string `env:"PROXY" env-default:"" validate:"omitempty,proxy"`
+	// RateLimitEvery and RateLimitBurst are parameters for Token Bucket algorithm.
+	// A token is added to the bucket every RateLimitEvery seconds.
+	// Rate limits don't apply to cache
+	RateLimitEvery float64 `env:"RATE_LIMIT_EVERY" env-default:"60" validate:"number,gt=0"`
+	RateLimitBurst int     `env:"RATE_LIMIT_BURST" env-default:"10" validate:"number,gte=0"`
 }
 
 func Read() (Config, error) {

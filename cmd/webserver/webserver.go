@@ -10,6 +10,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
 	"github.com/nats-io/nats.go"
+	"golang.org/x/time/rate"
 	"net/http"
 	"os"
 	"os/signal"
@@ -51,7 +52,12 @@ func main() {
 
 	e.StaticFS("/", echo.MustSubFS(wizard_vue.EmbedFS, wizard_vue.FSPrefix))
 
-	apiHandler := httpApi.New(na, na)
+	apiHandler := httpApi.New(
+		na,
+		na,
+		rate.Every(time.Duration(float64(time.Second)*cfg.RateLimitEvery)),
+		cfg.RateLimitBurst,
+	)
 	apiHandler.SetupRoutes(e.Group("/api/v1"))
 
 	go func() {
