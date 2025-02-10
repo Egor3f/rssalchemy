@@ -21,6 +21,8 @@ type Config struct {
 	// Rate limits don't apply to cache
 	RateLimitEvery float64 `env:"RATE_LIMIT_EVERY" env-default:"60" validate:"number,gt=0"`
 	RateLimitBurst int     `env:"RATE_LIMIT_BURST" env-default:"10" validate:"number,gte=0"`
+	// IP ranges of reverse proxies for correct real ip detection (cidr format, sep. by comma)
+	TrustedIpRanges []string `env:"TRUSTED_IP_RANGES" env-default:"" validate:"omitempty,dive,cidr"`
 }
 
 func Read() (Config, error) {
