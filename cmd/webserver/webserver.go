@@ -11,9 +11,11 @@ import (
 	"github.com/labstack/gommon/log"
 	"github.com/nats-io/nats.go"
 	"golang.org/x/time/rate"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
+	"slices"
 	"time"
 )
 
@@ -49,6 +51,16 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+
+	var trustOptions []echo.TrustOption
+	for _, ipRange := range slices.Concat(IpRanges, cfg.TrustedIpRanges) {
+		_, network, err := net.ParseCIDR(ipRange)
+		if err != nil {
+			log.Panicf("Invalid ip range: %s", ipRange)
+		}
+		trustOptions = append(trustOptions, echo.TrustIPRange(network))
+	}
+	e.IPExtractor = echo.ExtractIPFromXFFHeader(trustOptions...)
 
 	e.StaticFS("/", echo.MustSubFS(wizard_vue.EmbedFS, wizard_vue.FSPrefix))
 
