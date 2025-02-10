@@ -23,6 +23,7 @@ type Config struct {
 	RateLimitBurst int     `env:"RATE_LIMIT_BURST" env-default:"10" validate:"number,gte=0"`
 	// IP ranges of reverse proxies for correct real ip detection (cidr format, sep. by comma)
 	TrustedIpRanges []string `env:"TRUSTED_IP_RANGES" env-default:"" validate:"omitempty,dive,cidr"`
+	RealIpHeader    string   `env:"REAL_IP_HEADER" env-default:"" validate:"omitempty"`
 }
 
 func Read() (Config, error) {
