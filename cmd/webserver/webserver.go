@@ -52,15 +52,7 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	var trustOptions []echo.TrustOption
-	for _, ipRange := range slices.Concat(IpRanges, cfg.TrustedIpRanges) {
-		_, network, err := net.ParseCIDR(ipRange)
-		if err != nil {
-			log.Panicf("Invalid ip range: %s", ipRange)
-		}
-		trustOptions = append(trustOptions, echo.TrustIPRange(network))
-	}
-	e.IPExtractor = echo.ExtractIPFromXFFHeader(trustOptions...)
+	setIPExtractor(e, cfg)
 
 	e.StaticFS("/", echo.MustSubFS(wizard_vue.EmbedFS, wizard_vue.FSPrefix))
 
@@ -83,5 +75,30 @@ func main() {
 	defer cancel()
 	if err := e.Shutdown(ctx); err != nil {
 		e.Logger.Errorf("failed to shutdown server: %v", err)
+	}
+}
+
+func setIPExtractor(e *echo.Echo, cfg config.Config) {
+	if len(cfg.RealIpHeader) > 0 {
+		// Real ip header
+		e.IPExtractor = func(req *http.Request) string {
+			if len(req.Header.Get(cfg.RealIpHeader)) > 0 {
+				return req.Header.Get(cfg.RealIpHeader)
+			}
+			// fallback
+			ra, _, _ := net.SplitHostPort(req.RemoteAddr)
+			return ra
+		}
+	} else {
+		// X-Forwarded-For with trusted ip ranges
+		var trustOptions []echo.TrustOption
+		for _, ipRange := range slices.Concat(IpRanges, cfg.TrustedIpRanges) {
+			_, network, err := net.ParseCIDR(ipRange)
+			if err != nil {
+				log.Panicf("Invalid ip range: %s", ipRange)
+			}
+			trustOptions = append(trustOptions, echo.TrustIPRange(network))
+		}
+		e.IPExtractor = echo.ExtractIPFromXFFHeader(trustOptions...)
 	}
 }
