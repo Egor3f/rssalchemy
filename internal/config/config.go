@@ -10,15 +10,15 @@ import (
 )
 
 type Config struct {
-	WebserverAddress string `yaml:"webserver_address" env:"WEBSERVER_ADDRESS" env-required:"true" validate:"hostname_port"`
-	NatsUrl          string `yaml:"nats_url" env:"NATS_URL" env-required:"true" validate:"url"`
-	Debug            bool   `yaml:"debug" env:"DEBUG"`
-	Proxy            string `yaml:"proxy" env:"PROXY" env-default:"" validate:"omitempty,proxy"`
+	WebserverAddress string `env:"WEBSERVER_ADDRESS" env-default:"0.0.0.0:5000" validate:"hostname_port"`
+	NatsUrl          string `env:"NATS_URL" env-default:"nats://localhost:4222" validate:"url"`
+	Debug            bool   `env:"DEBUG"`
+	Proxy            string `env:"PROXY" env-default:"" validate:"omitempty,proxy"`
 }
 
 func Read() (Config, error) {
 	var cfg Config
-	err := cleanenv.ReadConfig("config.yml", &cfg)
+	err := cleanenv.ReadEnv(&cfg)
 	if err != nil {
 		return Config{}, err
 	}

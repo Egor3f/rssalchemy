@@ -45,13 +45,11 @@ For SSL, authentication, domains, etc. - use Caddy or Nginx (no specific configu
 
 ### Configuration
 
-Configuration is done using [config.yml](config.yml) file or env vars 
-
-Env vars always has precedence over config.yml
-
-Docker-compose deployment uses [deploy/.env file](deploy/.env)
+Configuration is done using environment variables
 
 You can see all available options in [config.go file](internal/config/config.go) (struct Config)
+
+Docker-compose deployment uses [deploy/.env file](deploy/.env)
 
 ### Scaling
 
