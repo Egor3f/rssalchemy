@@ -17,6 +17,7 @@ services:
     env_file: .env
     depends_on:
       - nats
+      - redis
     ipc: host
     user: pwuser
     security_opt:
@@ -31,6 +32,10 @@ services:
     volumes:
       - ./nats_config.conf:/nats_config.conf:ro
       - natsdata:/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4
     restart: unless-stopped
 
 volumes:

@@ -9,9 +9,12 @@ import (
 	natscookies "github.com/egor3f/rssalchemy/internal/cookiemgr/nats"
 	"github.com/egor3f/rssalchemy/internal/dateparser"
 	"github.com/egor3f/rssalchemy/internal/extractors/pwextractor"
+	"github.com/egor3f/rssalchemy/internal/limiter/redisleaky"
 	"github.com/egor3f/rssalchemy/internal/models"
 	"github.com/labstack/gommon/log"
 	"github.com/nats-io/nats.go"
+	"github.com/redis/go-redis/v9"
+	"golang.org/x/time/rate"
 	"os"
 	"os/signal"
 	"time"
@@ -23,9 +26,9 @@ func main() {
 		log.Panicf("reading config failed: %v", err)
 	}
 
+	log.SetHeader(`${time_rfc3339_nano} ${level}`)
 	if cfg.Debug {
 		log.SetLevel(log.DEBUG)
-		log.SetHeader(`${time_rfc3339_nano} ${level}`)
 	}
 
 	defer func() {
@@ -55,12 +58,32 @@ func main() {
 		log.Panicf("create cookie manager: %v", err)
 	}
 
+	redisClient := redis.NewClient(&redis.Options{
+		Addr: cfg.RedisUrl,
+	})
+	defer func() {
+		if err := redisClient.Close(); err != nil {
+			log.Errorf("close redis client: %v", err)
+		}
+	}()
+	if err := redisClient.Ping(baseCtx).Err(); err != nil {
+		log.Panicf("redis ping: %v", err)
+	}
+
+	perDomainLimiter, err := redisleaky.New(
+		rate.Every(time.Duration(float64(time.Second)*cfg.PerDomainRateLimitEvery)),
+		int64(cfg.PerDomainRateLimitCapacity),
+		redisClient,
+		"per_domain_limiter",
+	)
+
 	pwe, err := pwextractor.New(pwextractor.Config{
 		Proxy: cfg.Proxy,
 		DateParser: &dateparser.DateParser{
 			CurrentTimeFunc: time.Now,
 		},
 		CookieManager: cookieManager,
+		Limiter:       perDomainLimiter,
 	})
 	if err != nil {
 		log.Panicf("create pw extractor: %v", err)
