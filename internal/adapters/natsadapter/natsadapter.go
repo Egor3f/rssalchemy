@@ -148,7 +148,7 @@ func (na *NatsAdapter) ConsumeQueue(
 		if err := msg.InProgress(); err != nil {
 			log.Errorf("task seq=%d inProgress: %v", seq, err)
 		}
-		log.Infof("got task seq=%d payload=%s", seq, msg.Data())
+		log.Infof("got task seq=%d payload=%.100s", seq, msg.Data())
 
 		defer func() {
 			if err := recover(); err != nil {
@@ -169,7 +169,7 @@ func (na *NatsAdapter) ConsumeQueue(
 			return
 		}
 
-		log.Infof("task seq=%d cachekey=%s finished, payload=%.100s", seq, cacheKey, resultPayload)
+		log.Infof("task finished seq=%d cachekey=%s payload=%.100s", seq, cacheKey, resultPayload)
 		if _, err := na.kv.Put(ctx, cacheKey, resultPayload); err != nil {
 			log.Errorf("put seq=%d to cache: %v", seq, err)
 			return

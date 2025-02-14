@@ -1,7 +1,9 @@
 package pwextractor
 
 import (
+	"context"
 	"fmt"
+	"github.com/egor3f/rssalchemy/internal/limiter"
 	"github.com/egor3f/rssalchemy/internal/models"
 	"github.com/labstack/gommon/log"
 	"github.com/playwright-community/playwright-go"
@@ -27,12 +29,14 @@ type PwExtractor struct {
 	chrome        playwright.Browser
 	dateParser    DateParser
 	cookieManager CookieManager
+	limiter       limiter.Limiter
 }
 
 type Config struct {
 	Proxy         string
 	DateParser    DateParser
 	CookieManager CookieManager
+	Limiter       limiter.Limiter
 }
 
 func New(cfg Config) (*PwExtractor, error) {
@@ -58,7 +62,8 @@ func New(cfg Config) (*PwExtractor, error) {
 
 	e.dateParser = cfg.DateParser
 	e.cookieManager = cfg.CookieManager
-	if e.dateParser == nil || e.cookieManager == nil {
+	e.limiter = cfg.Limiter
+	if e.dateParser == nil || e.cookieManager == nil || e.limiter == nil {
 		panic("you fckd up with di again")
 	}
 
@@ -77,6 +82,20 @@ func (e *PwExtractor) Stop() error {
 
 func (e *PwExtractor) visitPage(task models.Task, cb func(page playwright.Page) error) (errRet error) {
 
+	baseDomain, scheme, err := parseBaseDomain(task.URL)
+	if err != nil {
+		return fmt.Errorf("parse base domain: %w", err)
+	}
+
+	waitFor, err := e.limiter.Limit(context.TODO(), baseDomain)
+	if err != nil {
+		return fmt.Errorf("bydomain limiter: %w", err)
+	}
+	if waitFor > 0 {
+		log.Infof("Bydomain limiter domain=%s wait=%v", baseDomain, waitFor)
+		time.Sleep(waitFor) // todo: task timeouts
+	}
+
 	headers := maps.Clone(task.Headers)
 	headers["Sec-Ch-Ua"] = secChUa
 
@@ -90,7 +109,7 @@ func (e *PwExtractor) visitPage(task models.Task, cb func(page playwright.Page) 
 			log.Errorf("cookie manager get: %v", err)
 			cookies = make([][2]string, 0)
 		}
-		log.Debugf("Found cookies: %v", cookies)
+		log.Debugf("Found cookies, count=%d", len(cookies))
 		delete(headers, "Cookie")
 	}
 
@@ -106,11 +125,6 @@ func (e *PwExtractor) visitPage(task models.Task, cb func(page playwright.Page) 
 			errRet = fmt.Errorf("close context: %w; other error=%w", err, errRet)
 		}
 	}()
-
-	baseDomain, scheme, err := parseBaseDomain(task.URL)
-	if err != nil {
-		return fmt.Errorf("parse base domain: %w", err)
-	}
 
 	if len(cookies) > 0 {
 		var pwCookies []playwright.OptionalCookie

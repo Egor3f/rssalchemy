@@ -25,9 +25,9 @@ func main() {
 		log.Panicf("reading config failed: %v", err)
 	}
 
+	log.SetHeader(`${time_rfc3339_nano} ${level}`)
 	if cfg.Debug {
 		log.SetLevel(log.DEBUG)
-		log.SetHeader(`${time_rfc3339_nano} ${level}`)
 	}
 
 	baseCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -59,8 +59,8 @@ func main() {
 	apiHandler := httpApi.New(
 		na,
 		na,
-		rate.Every(time.Duration(float64(time.Second)*cfg.RateLimitEvery)),
-		cfg.RateLimitBurst,
+		rate.Every(time.Duration(float64(time.Second)*cfg.TaskRateLimitEvery)),
+		cfg.TaskRateLimitBurst,
 	)
 	apiHandler.SetupRoutes(e.Group("/api/v1"))
 
