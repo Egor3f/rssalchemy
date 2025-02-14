@@ -18,7 +18,7 @@ RUN go mod download
 
 RUN PWGO_VER=$(grep -oE "playwright-go v\S+" go.mod | sed 's/playwright-go //g') \
     && go install github.com/playwright-community/playwright-go/cmd/playwright@${PWGO_VER}
-RUN playwright install --with-deps chromium chromium-headless-shell && \
+RUN playwright install --with-deps chromium && \
     mkdir /home/pwuser/.cache && \
     mv /root/.cache/ms-playwright* /home/pwuser/.cache/ && \
     chown -R pwuser:pwuser /home/pwuser/.cache && \
