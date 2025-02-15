@@ -51,6 +51,7 @@ func New(cfg Config) (*PwExtractor, error) {
 		return nil, fmt.Errorf("parse proxy: %w", err)
 	}
 	e.chrome, err = e.pw.Chromium.Launch(playwright.BrowserTypeLaunchOptions{
+		Channel:         playwright.String("chromium"),
 		ChromiumSandbox: playwright.Bool(true),
 		HandleSIGINT:    playwright.Bool(false),
 		Proxy:           proxy,
