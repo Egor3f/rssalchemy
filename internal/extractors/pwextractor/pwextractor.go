@@ -168,7 +168,7 @@ func (e *PwExtractor) visitPage(task models.Task, cb func(page playwright.Page) 
 
 	start := time.Now()
 	err = cb(page)
-	log.Debugf("Visiting page %s finished, time=%f secs, err=%v", task.URL, time.Since(start).Seconds(), err)
+	log.Infof("Visiting page %s finished, time=%f secs, err=%v", task.URL, time.Since(start).Seconds(), err)
 
 	if len(cookies) > 0 {
 		bCookies, err := bCtx.Cookies(fmt.Sprintf("%s://%s", scheme, baseDomain))
