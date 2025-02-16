@@ -13,7 +13,7 @@ require (
 	github.com/markusmobius/go-dateparser v1.2.3
 	github.com/mennanov/limiters v1.11.0
 	github.com/nats-io/nats.go v1.38.0
-	github.com/playwright-community/playwright-go v0.4901.0
+	github.com/playwright-community/playwright-go v0.5001.0
 	github.com/redis/go-redis/v9 v9.7.0
 	golang.org/x/time v0.8.0
 )
