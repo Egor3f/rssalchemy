@@ -51,6 +51,10 @@ func New(cfg Config) (*PwExtractor, error) {
 		return nil, fmt.Errorf("parse proxy: %w", err)
 	}
 	e.chrome, err = e.pw.Chromium.Launch(playwright.BrowserTypeLaunchOptions{
+		Args: []string{
+			"--webrtc-ip-handling-policy=disable_non_proxied_udp",
+			"--force-webrtc-ip-handling-policy",
+		},
 		Channel:         playwright.String("chromium"),
 		ChromiumSandbox: playwright.Bool(true),
 		HandleSIGINT:    playwright.Bool(false),
