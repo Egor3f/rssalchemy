@@ -251,7 +251,7 @@ func (e *PwExtractor) allowHost(rawUrl string) (bool, error) {
 		deny := ip.IsPrivate() || ip.IsLoopback() || ip.IsUnspecified() || ip.IsLinkLocalUnicast() || ip.IsMulticast()
 		deny = deny || e.proxyIP.Equal(ip)
 		if deny {
-			log.Debugf("Banned address: %s", rawUrl)
+			log.Warnf("Banned address: %s", rawUrl)
 			return false, nil
 		}
 	}
