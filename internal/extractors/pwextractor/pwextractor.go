@@ -8,6 +8,7 @@ import (
 	"github.com/labstack/gommon/log"
 	"github.com/playwright-community/playwright-go"
 	"maps"
+	"net"
 	"strings"
 	"time"
 )
@@ -30,6 +31,7 @@ type PwExtractor struct {
 	dateParser    DateParser
 	cookieManager CookieManager
 	limiter       limiter.Limiter
+	proxyIP       net.IP
 }
 
 type Config struct {
@@ -49,6 +51,13 @@ func New(cfg Config) (*PwExtractor, error) {
 	proxy, err := parseProxy(cfg.Proxy)
 	if err != nil {
 		return nil, fmt.Errorf("parse proxy: %w", err)
+	}
+	if proxy != nil {
+		proxyIPs, err := getIPs(proxy.Server)
+		if err != nil {
+			return nil, fmt.Errorf("get proxy ip: %w", err)
+		}
+		e.proxyIP = proxyIPs[0]
 	}
 	e.chrome, err = e.pw.Chromium.Launch(playwright.BrowserTypeLaunchOptions{
 		Args: []string{
@@ -121,6 +130,8 @@ func (e *PwExtractor) visitPage(task models.Task, cb func(page playwright.Page) 
 	bCtx, err := e.chrome.NewContext(playwright.BrowserNewContextOptions{
 		ExtraHttpHeaders: headers,
 		UserAgent:        &userAgent,
+		ServiceWorkers:   playwright.ServiceWorkerPolicyBlock,
+		AcceptDownloads:  playwright.Bool(false),
 	})
 	if err != nil {
 		return fmt.Errorf("create browser context: %w", err)
@@ -130,6 +141,44 @@ func (e *PwExtractor) visitPage(task models.Task, cb func(page playwright.Page) 
 			errRet = fmt.Errorf("close context: %w; other error=%w", err, errRet)
 		}
 	}()
+
+	if err := bCtx.Route("**", func(route playwright.Route) {
+		log.Debugf("Route: %s", route.Request().URL())
+		allowHost, err := e.allowHost(route.Request().URL())
+		if err != nil {
+			log.Errorf("Allow host: %v", err)
+			allowHost = false
+		}
+		if allowHost {
+			if err := route.Continue(); err != nil {
+				log.Warnf("Route continue error: %v", err)
+			}
+		} else {
+			if err := route.Abort(); err != nil {
+				log.Warnf("Route abort error: %v", err)
+			}
+		}
+	}); err != nil {
+		return fmt.Errorf("set route: %w", err)
+	}
+
+	if err := bCtx.RouteWebSocket("**", func(route playwright.WebSocketRoute) {
+		log.Debugf("Websocket route: %s", route.URL())
+		allowHost, err := e.allowHost(route.URL())
+		if err != nil {
+			log.Errorf("Allow host: %v", err)
+			allowHost = false
+		}
+		if allowHost {
+			if _, err := route.ConnectToServer(); err != nil {
+				log.Warnf("Websocket connect error: %v", err)
+			}
+		} else {
+			route.Close()
+		}
+	}); err != nil {
+		return fmt.Errorf("websocket set route: %w", err)
+	}
 
 	if len(cookies) > 0 {
 		var pwCookies []playwright.OptionalCookie
@@ -191,6 +240,22 @@ func (e *PwExtractor) visitPage(task models.Task, cb func(page playwright.Page) 
 	}
 
 	return err
+}
+
+func (e *PwExtractor) allowHost(rawUrl string) (bool, error) {
+	ips, err := getIPs(rawUrl)
+	if err != nil {
+		return false, fmt.Errorf("allow host get ips: %w", err)
+	}
+	for _, ip := range ips {
+		deny := ip.IsPrivate() || ip.IsLoopback() || ip.IsUnspecified() || ip.IsLinkLocalUnicast() || ip.IsMulticast()
+		deny = deny || e.proxyIP.Equal(ip)
+		if deny {
+			log.Debugf("Banned address: %s", rawUrl)
+			return false, nil
+		}
+	}
+	return true, nil
 }
 
 func (e *PwExtractor) Extract(task models.Task) (result *models.TaskResult, errRet error) {
