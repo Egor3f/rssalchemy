@@ -2,7 +2,9 @@ package pwextractor
 
 import (
 	"fmt"
+	"github.com/jellydator/ttlcache/v3"
 	"github.com/playwright-community/playwright-go"
+	"net"
 	"net/url"
 	"slices"
 	"strings"
@@ -65,4 +67,50 @@ func parseBaseDomain(urlStr string) (domain string, scheme string, err error) {
 		return "", "", fmt.Errorf("bad scheme: %s", scheme)
 	}
 	return fmt.Sprintf("%s.%s", domainParts[1], domainParts[0]), scheme, nil
+}
+
+var dnsCache *ttlcache.Cache[string, []net.IP]
+
+func init() {
+	dnsCache = ttlcache.New[string, []net.IP](
+		ttlcache.WithTTL[string, []net.IP](1*time.Minute),
+		ttlcache.WithDisableTouchOnHit[string, []net.IP](),
+	)
+	go dnsCache.Start()
+}
+
+// getIPs from url, hostname, ip string
+// result slice len always > 0 if error is nil
+func getIPs(host string) ([]net.IP, error) {
+	ip := net.ParseIP(host)
+	if ip != nil {
+		return []net.IP{ip}, nil
+	}
+
+	urlStruct, err := url.Parse(host)
+	if err != nil {
+		return nil, fmt.Errorf("url parse: %w", err)
+	}
+	if len(urlStruct.Host) > 0 {
+		host = urlStruct.Hostname()
+		ip = net.ParseIP(host)
+		if ip != nil {
+			return []net.IP{ip}, nil
+		}
+	}
+
+	var ips []net.IP
+	if dnsCache.Has(host) {
+		ips = dnsCache.Get(host).Value()
+	} else {
+		ips, err = net.LookupIP(host)
+		if err != nil {
+			return nil, fmt.Errorf("lookup ip: %w", err)
+		}
+		dnsCache.Set(host, ips, ttlcache.DefaultTTL)
+	}
+	if len(ips) == 0 {
+		return nil, fmt.Errorf("lookip ip: not resolved")
+	}
+	return ips, nil
 }

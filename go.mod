@@ -8,6 +8,7 @@ require (
 	github.com/go-redsync/redsync/v4 v4.8.1
 	github.com/gorilla/feeds v1.2.0
 	github.com/ilyakaznacheev/cleanenv v1.5.0
+	github.com/jellydator/ttlcache/v3 v3.3.0
 	github.com/labstack/echo/v4 v4.13.3
 	github.com/labstack/gommon v0.4.2
 	github.com/markusmobius/go-dateparser v1.2.3
@@ -15,6 +16,7 @@ require (
 	github.com/nats-io/nats.go v1.38.0
 	github.com/playwright-community/playwright-go v0.5001.0
 	github.com/redis/go-redis/v9 v9.7.0
+	github.com/stretchr/testify v1.10.0
 	golang.org/x/time v0.8.0
 )
 
@@ -36,6 +38,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
+	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/deckarep/golang-set/v2 v2.7.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/elliotchance/pie/v2 v2.7.0 // indirect
@@ -72,8 +75,8 @@ require (
 	github.com/nats-io/nkeys v0.4.9 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/samuel/go-zookeeper v0.0.0-20201211165307-7117e9ea2414 // indirect
-	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/tetratelabs/wazero v1.2.1 // indirect
 	github.com/thanhpk/randstr v1.0.4 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
@@ -88,6 +91,7 @@ require (
 	golang.org/x/crypto v0.32.0 // indirect
 	golang.org/x/exp v0.0.0-20230817173708-d852ddb80c63 // indirect
 	golang.org/x/net v0.34.0 // indirect
+	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/sys v0.29.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240814211410-ddb44dafa142 // indirect
