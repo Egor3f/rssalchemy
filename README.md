@@ -14,6 +14,13 @@ RSS Alchemy is a website-to-rss converter, like RSSHub, RSS-bridge or Rss.app. H
 - Distruibuted by design (deploy as many workers as you need)
 - Self-hosted; easy to deploy; docker-compose provided
 - Relatively small codebase, written in go + typescript
+- Security and reliability:
+  - Rate-limit by source client IP
+  - Rate-limit by target domain (to prevent 429 if many tasks target the same site)
+  - Block service workers
+  - Prevent WebRTC leak if using proxy
+  - Block localhost and private IPs (including proxy server's internal services)
+  - Chrome is sandboxed; container is UNprivileged
 
 [^1]: Cookies require support from your RSS reader/aggregator. Miniflux works, others are not checked yet.
 [^2]: Nats KV is used to store cookies permanently, it's required for sites that update cookies on every request, like
@@ -28,8 +35,7 @@ youtube
 
 ## Project status
 
-Program is still under development. The code architecture is not final, tests are missing, no CI, no demo page, no docs,
-etc...
+Program is still under development. The code architecture is not final, no CI, no demo page, etc...
 
 ## Deployment
 
