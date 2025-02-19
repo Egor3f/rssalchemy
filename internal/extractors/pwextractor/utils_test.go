@@ -107,3 +107,103 @@ func TestGetIPs(t *testing.T) {
 		require.ElementsMatch(t, ips, dnsCache.Get(testDomain).Value())
 	})
 }
+
+func Test_parseBaseDomain(t *testing.T) {
+	tests := []struct {
+		name           string
+		urlStr         string
+		expectedDomain string
+		expectedScheme string
+		expectErr      bool
+	}{
+		{
+			name:           "valid https with subdomain",
+			urlStr:         "https://kek.example.com/lol",
+			expectedDomain: "example.com",
+			expectedScheme: "https",
+		},
+		{
+			name:           "valid http with www subdomain",
+			urlStr:         "http://www.example.com/path",
+			expectedDomain: "example.com",
+			expectedScheme: "http",
+		},
+		{
+			name:           "valid http with no subdomain",
+			urlStr:         "http://example.com",
+			expectedDomain: "example.com",
+			expectedScheme: "http",
+		},
+		{
+			name:           "url with port in host",
+			urlStr:         "http://example.com:8080/path",
+			expectedDomain: "example.com",
+			expectedScheme: "http",
+		},
+		{
+			name:           "url with ip address host",
+			urlStr:         "http://192.168.1.1",
+			expectedDomain: "192.168.1.1",
+			expectedScheme: "http",
+		},
+		{
+			name:           "url with uppercase http scheme",
+			urlStr:         "HTTP://EXAMPLE.COM",
+			expectedDomain: "example.com",
+			expectedScheme: "http",
+		},
+		{
+			name:      "invalid scheme (ftp)",
+			urlStr:    "ftp://example.com",
+			expectErr: true,
+		},
+		{
+			name:      "no scheme",
+			urlStr:    "example.com",
+			expectErr: true,
+		},
+		{
+			name:      "invalid url format",
+			urlStr:    "http//example.com",
+			expectErr: true,
+		},
+		{
+			name:      "empty url string",
+			urlStr:    "",
+			expectErr: true,
+		},
+		{
+			name:           "url with user info",
+			urlStr:         "http://user:pass@example.com",
+			expectedDomain: "example.com",
+			expectedScheme: "http",
+		},
+		{
+			name:           "url with multiple subdomains",
+			urlStr:         "https://a.b.c.example.com",
+			expectedDomain: "example.com",
+			expectedScheme: "https",
+		},
+		{
+			name:      "url with leading/trailing whitespace",
+			urlStr:    " https://example.com ",
+			expectErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			domain, scheme, err := parseBaseDomain(tt.urlStr)
+
+			if tt.expectErr {
+				require.Error(t, err)
+				assert.Empty(t, domain)
+				assert.Empty(t, scheme)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.expectedDomain, domain)
+				assert.Equal(t, tt.expectedScheme, scheme)
+			}
+		})
+	}
+}

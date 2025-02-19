@@ -55,17 +55,25 @@ func parseProxy(s string) (*playwright.Proxy, error) {
 	return proxy, nil
 }
 
+// parseBaseDomain extracts second-level domain from url, e.g.
+// https://kek.example.com/lol becomes example.com
+// if url is invalid or scheme is not http(s), returns error, otherwise returns scheme and domain
 func parseBaseDomain(urlStr string) (domain string, scheme string, err error) {
 	pageUrl, err := url.Parse(urlStr)
 	if err != nil {
 		return "", "", fmt.Errorf("task url parsing: %w", err)
 	}
-	domainParts := strings.Split(pageUrl.Host, ".")
-	slices.Reverse(domainParts) // com, example, www
 	scheme = pageUrl.Scheme
 	if !slices.Contains([]string{"https", "http"}, scheme) {
 		return "", "", fmt.Errorf("bad scheme: %s", scheme)
 	}
+	hostname := strings.ToLower(pageUrl.Hostname())
+	ipHost := net.ParseIP(hostname)
+	if ipHost != nil {
+		return ipHost.String(), scheme, nil
+	}
+	domainParts := strings.Split(hostname, ".")
+	slices.Reverse(domainParts) // com, example, www
 	return fmt.Sprintf("%s.%s", domainParts[1], domainParts[0]), scheme, nil
 }
 
