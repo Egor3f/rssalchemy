@@ -2,7 +2,7 @@
 
 ## About
 
-RSS Alchemy is a website-to-rss converter, like RSSHub, RSS-bridge or Rss.app. Here is the difference:
+RSS Alchemy is a website-to-rss converter, like RSSHub, RSS-bridge or Rss.app. Here are main features:
 
 - Convert arbitrary website to RSS feed using CSS selectors
 - Dynamic websites are supported using headless chrome (playwright)
