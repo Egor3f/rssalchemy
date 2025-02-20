@@ -1,24 +1,13 @@
 <script setup lang="ts">
 import SpecsForm from "@/components/SpecsForm.vue";
-import {reactive, ref, watch} from "vue";
-import {type Field, fields, type Specs} from "@/urlmaker/specs.ts";
+import {ref, watch} from "vue";
 import Btn from "@/components/Btn.vue";
 import Copyable from "@/components/Copyable.vue";
 import EditUrlModal from "@/components/EditUrlModal.vue";
 import {decodeUrl, encodeUrl, getScreenshotUrl} from "@/urlmaker";
+import {useWizardStore} from "@/stores/wizard.ts";
 
-const emptySpecs = fields.reduce((o, f) => {
-  o[f.name] = f.default;
-  return o
-}, {} as Specs);
-const specs = reactive(emptySpecs);
-const formValid = ref(false);
-
-watch(specs, (value) => {
-  formValid.value = fields.every(field => (
-    value[field.name].length === 0 && !(field as Field).required || field.validate(value[field.name]).ok
-  ));
-});
+const store = useWizardStore();
 
 const existingLink = ref("");
 const link = ref("");
@@ -28,7 +17,7 @@ watch(existingLink, async (value) => {
   if(!value) return;
   existingLink.value = "";
   try {
-    Object.assign(specs, await decodeUrl(value));
+    store.updateSpecs(await decodeUrl(value));
     link.value = "";
   } catch (e) {
     console.log(e);
@@ -38,7 +27,7 @@ watch(existingLink, async (value) => {
 
 async function generateLink() {
   try {
-    link.value = await encodeUrl(specs);
+    link.value = await encodeUrl(store.specs);
   } catch (e) {
     console.log(e);
     alert(`Encoding error: ${e}`);
@@ -46,16 +35,16 @@ async function generateLink() {
 }
 
 function screenshot() {
-  window.open(getScreenshotUrl(specs.url));
+  window.open(getScreenshotUrl(store.specs.url));
 }
 
 </script>
 
 <template>
   <div class="wrapper">
-    <SpecsForm v-model="specs" class="specs-form"></SpecsForm>
-    <Btn :active="formValid" @click="generateLink">Generate link</Btn>
-    <Btn :active="formValid" @click="screenshot">Screenshot</Btn>
+    <SpecsForm :model-value="store.specs" @update:model-value="store.updateSpecs" class="specs-form"></SpecsForm>
+    <Btn :active="store.formValid" @click="generateLink">Generate link</Btn>
+    <Btn :active="store.formValid" @click="screenshot">Screenshot</Btn>
     <Btn @click="editModalVisible = true">Edit existing task</Btn>
     <Copyable v-if="link" :contents="link" class="link-view"></Copyable>
     <EditUrlModal :visible="editModalVisible" @close="editModalVisible = false"
