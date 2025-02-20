@@ -90,4 +90,9 @@ export const fields = [
 
 export type FieldNames = (typeof fields)[number]['name'];
 
-export type Specs = {[k in FieldNames]: string}
+export type Specs = {[k in FieldNames]: string};
+
+export const emptySpecs = fields.reduce((o, f) => {
+  o[f.name] = f.default;
+  return o
+}, {} as Specs);
