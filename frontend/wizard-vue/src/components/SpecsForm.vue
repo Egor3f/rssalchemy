@@ -1,14 +1,19 @@
 <script setup lang="ts">
 import {fields, type Specs} from '@/urlmaker/specs.ts';
 import Field from "@/components/Field.vue";
+import {useWizardStore} from "@/stores/wizard.ts";
 
-const model = defineModel<Specs>({required: true});
+const store = useWizardStore();
 
 </script>
 
 <template>
   <div>
-    <Field v-for="field in fields" :field="field" v-model="model[field.name]"></Field>
+    <Field v-for="field in fields"
+           :field="field"
+           :model-value="store.specs[field.name]"
+           @update:model-value="event => store.updateSpec(field.name, event)"
+    ></Field>
   </div>
 </template>
 

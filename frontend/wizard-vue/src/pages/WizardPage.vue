@@ -42,7 +42,7 @@ function screenshot() {
 
 <template>
   <div class="wrapper">
-    <SpecsForm :model-value="store.specs" @update:model-value="store.updateSpecs" class="specs-form"></SpecsForm>
+    <SpecsForm class="specs-form"></SpecsForm>
     <Btn :active="store.formValid" @click="generateLink">Generate link</Btn>
     <Btn :active="store.formValid" @click="screenshot">Screenshot</Btn>
     <Btn @click="editModalVisible = true">Edit existing task</Btn>
