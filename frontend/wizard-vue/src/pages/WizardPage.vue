@@ -46,6 +46,7 @@ function screenshot() {
     <Btn :active="store.formValid" @click="generateLink">Generate link</Btn>
     <Btn :active="store.formValid" @click="screenshot">Screenshot</Btn>
     <Btn @click="editModalVisible = true">Edit existing task</Btn>
+    <Btn @click="store.reset">Reset Form</Btn>
     <Copyable v-if="link" :contents="link" class="link-view"></Copyable>
     <EditUrlModal :visible="editModalVisible" @close="editModalVisible = false"
                   v-model="existingLink"></EditUrlModal>
