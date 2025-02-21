@@ -1,16 +1,35 @@
 import {defineStore} from "pinia";
-import {emptySpecs, type Field, fields, type Specs} from "@/urlmaker/specs.ts";
-import {computed, reactive, ref} from "vue";
+import {emptySpecs, type Field, type FieldNames, fields, type Specs} from "@/urlmaker/specs.ts";
+import {computed, reactive} from "vue";
+import {debounce} from "es-toolkit";
+
+const LOCAL_STORAGE_KEY = 'rssalchemy_store_wizard';
 
 export const useWizardStore = defineStore('wizard', () => {
-  const specs = reactive(emptySpecs);
+
+  const locStorageContent = localStorage.getItem(LOCAL_STORAGE_KEY);
+  const defaultSpecs = locStorageContent ? JSON.parse(locStorageContent) as Specs : emptySpecs;
+
+  const specs = reactive(defaultSpecs);
+
   const formValid = computed(() => {
     return fields.every(field => (
       specs[field.name].length === 0 && !(field as Field).required || field.validate(specs[field.name]).ok
     ));
   });
-  function updateSpecs(newSpecs: Specs) {
-    Object.assign(specs, newSpecs);
+
+  const updateLocalStorage = debounce(() => {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(specs));
+  }, 500);
+
+  function updateSpec(fieldName: FieldNames, newValue: string) {
+    specs[fieldName] = newValue;
+    updateLocalStorage();
   }
-  return {specs, formValid, updateSpecs};
+  function updateSpecs(newValue: Specs) {
+    Object.assign(specs, newValue);
+    updateLocalStorage();
+  }
+
+  return {specs, formValid, updateSpec, updateSpecs};
 });
