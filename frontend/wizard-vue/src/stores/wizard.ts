@@ -8,9 +8,9 @@ const LOCAL_STORAGE_KEY = 'rssalchemy_store_wizard';
 export const useWizardStore = defineStore('wizard', () => {
 
   const locStorageContent = localStorage.getItem(LOCAL_STORAGE_KEY);
-  const defaultSpecs = locStorageContent ? JSON.parse(locStorageContent) as Specs : emptySpecs;
+  const initialSpecs = locStorageContent ? JSON.parse(locStorageContent) as Specs : emptySpecs;
 
-  const specs = reactive(defaultSpecs);
+  const specs = reactive(Object.assign({}, initialSpecs));
 
   const formValid = computed(() => {
     return fields.every(field => (
@@ -30,6 +30,10 @@ export const useWizardStore = defineStore('wizard', () => {
     Object.assign(specs, newValue);
     updateLocalStorage();
   }
+  function reset() {
+    Object.assign(specs, emptySpecs);
+    updateLocalStorage();
+  }
 
-  return {specs, formValid, updateSpec, updateSpecs};
+  return {specs, formValid, updateSpec, updateSpecs, reset};
 });
