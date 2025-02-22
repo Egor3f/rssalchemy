@@ -26,12 +26,14 @@ watch(existingLink, async (value) => {
 });
 
 watch(store.specs, debounce(() => {
-  if(store.formValid) {
-    generateLink();
-  } else {
-    link.value = "";
-  }
-}, 100));
+    if (store.formValid) {
+      generateLink();
+    } else {
+      link.value = "";
+    }
+  }, 100),
+  {immediate: true}
+);
 
 async function generateLink() {
   try {
