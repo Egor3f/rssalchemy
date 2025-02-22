@@ -20,7 +20,7 @@ export const useWizardStore = defineStore('wizard', () => {
 
   const updateLocalStorage = debounce(() => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(specs));
-  }, 500);
+  }, 250);
 
   function updateSpec(fieldName: FieldNames, newValue: string) {
     specs[fieldName] = newValue;
