@@ -18,7 +18,6 @@ watch(existingLink, async (value) => {
   existingLink.value = "";
   try {
     store.updateSpecs(await decodeUrl(value));
-    link.value = "";
   } catch (e) {
     console.log(e);
     alert(`Decoding error: ${e}`);
@@ -58,8 +57,7 @@ function screenshot() {
     <Btn @click="editModalVisible = true">Edit existing task</Btn>
     <Btn @click="store.reset">Reset Form</Btn>
     <Copyable v-if="link" :contents="link" class="link-view"></Copyable>
-    <EditUrlModal :visible="editModalVisible" @close="editModalVisible = false"
-                  v-model="existingLink"></EditUrlModal>
+    <EditUrlModal v-model:visible="editModalVisible" v-model="existingLink"></EditUrlModal>
   </div>
 </template>
 

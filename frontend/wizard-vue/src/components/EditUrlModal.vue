@@ -5,6 +5,7 @@ import {type Field as FieldSpec} from "@/urlmaker/specs";
 import {validateUrl} from "@/urlmaker/validators.ts";
 import Btn from "@/components/Btn.vue";
 import {onMounted, onUnmounted, ref, watch} from "vue";
+import Modal from "@/components/Modal.vue";
 
 const field: FieldSpec = {
   name: '',
@@ -15,18 +16,17 @@ const field: FieldSpec = {
   validate: validateUrl,
 }
 
-const {visible, modelValue} = defineProps({
-  visible: Boolean,
+const visible = defineModel('visible');
+const {modelValue} = defineProps({
   modelValue: {
     type: String,
     required: true,
   }
 });
-
-const emit = defineEmits(['close', 'update:modelValue']);
+const emit = defineEmits(['update:modelValue', 'update:visible']);
 
 const url = ref(modelValue);
-watch(() => visible, () => {
+watch(visible, () => {
   url.value = modelValue;
 });
 
@@ -39,12 +39,12 @@ const accept = () => {
   valid.value = field.validate(url.value).ok;
   if (valid.value) {
     emit('update:modelValue', url.value);
-    emit('close');
+    emit('update:visible', false);
   }
 }
 
 const listener = (e: KeyboardEvent) => {
-  if (e.code === 'Escape') emit('close');
+  if (e.code === 'Escape') emit('update:visible', false);
   if (e.code === 'Enter') accept();
 };
 onMounted(() => {
@@ -57,35 +57,12 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <Teleport to="#app">
-    <div class="modal-wrapper" v-if="visible" @click="$emit('close')">
-      <div class="modal" @click.stop>
-        <Field :field="field" v-model="url" :focused="true"/>
-        <Btn :active="valid" @click="accept">Edit</Btn>
-      </div>
-    </div>
-  </Teleport>
+  <Modal v-model="visible">
+    <Field :field="field" v-model="url" :focused="true"/>
+    <Btn :active="valid" @click="accept">Edit</Btn>
+  </Modal>
 </template>
 
 <style scoped lang="scss">
-div.modal-wrapper {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  background: rgba(200, 200, 200, 0.5);
-  backdrop-filter: blur(2px);
-}
 
-div.modal {
-  width: 100%;
-  max-width: 400px;
-  margin: auto auto;
-  background: #ffffff;
-  padding: 10px;
-  border-radius: 6px;
-  box-shadow: #a0a0a0 1px 2px 2px;
-}
 </style>
