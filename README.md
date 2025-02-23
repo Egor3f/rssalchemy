@@ -65,7 +65,7 @@ Each worker can process 1 page at a time, so to scale you should run multiple wo
 ## Development
 
 You need 
-- Go 1.23 (most of application), 
+- Go 1.23 (most of application)
 - Node.js 20 (frontend)
 - Nats (with jetstream)
 - Redis

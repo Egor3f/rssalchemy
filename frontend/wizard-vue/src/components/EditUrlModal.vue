@@ -16,18 +16,19 @@ const field: FieldSpec = {
   validate: validateOr(validateUrl, validatePreset),
 }
 
-const visible = defineModel('visible');
-const {modelValue} = defineProps({
-  modelValue: {
-    type: String,
-    required: true,
-  }
+const visible = defineModel('visible', {
+  type: Boolean,
+  required: true
+});
+const modelValue = defineModel({
+  type: String,
+  required: true
 });
 const emit = defineEmits(['update:modelValue', 'update:visible']);
 
-const url = ref(modelValue);
+const url = ref(modelValue.value);
 watch(visible, () => {
-  url.value = modelValue;
+  url.value = modelValue.value;
 });
 
 const valid = ref(false);
