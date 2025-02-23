@@ -2,6 +2,8 @@
 /trash/
 /todo.md
 /.env.dev
+/test_tasks/
+/compare_revs.sh
 /task*.json
 /screenshot*.png
 node_modules
