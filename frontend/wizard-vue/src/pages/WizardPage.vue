@@ -4,20 +4,23 @@ import {ref, watch} from "vue";
 import Btn from "@/components/Btn.vue";
 import Copyable from "@/components/Copyable.vue";
 import EditUrlModal from "@/components/EditUrlModal.vue";
-import {decodeUrl, encodeUrl, getScreenshotUrl} from "@/urlmaker";
+import {decodePreset, decodeUrl, encodePreset, encodeUrl, getScreenshotUrl} from "@/urlmaker";
 import {useWizardStore} from "@/stores/wizard.ts";
 import {debounce} from "es-toolkit";
+import {validatePreset, validateUrl} from "@/urlmaker/validators.ts";
 
 const store = useWizardStore();
 const existingLink = ref("");
-const link = ref("");
+const resultLink = ref("");
+const resultPreset = ref("");
 const editModalVisible = ref(false);
 
 watch(existingLink, async (value) => {
   if(!value) return;
   existingLink.value = "";
   try {
-    store.updateSpecs(await decodeUrl(value));
+    if(validateUrl(value).ok) store.updateSpecs(await decodeUrl(value));
+    else if (validatePreset(value).ok) store.updateSpecs(await decodePreset(value));
   } catch (e) {
     console.log(e);
     alert(`Decoding error: ${e}`);
@@ -26,17 +29,18 @@ watch(existingLink, async (value) => {
 
 watch(store.specs, debounce(() => {
     if (store.formValid) {
-      generateLink();
+      generate();
     } else {
-      link.value = "";
+      resultLink.value = "";
     }
   }, 100),
   {immediate: true}
 );
 
-async function generateLink() {
+async function generate() {
   try {
-    link.value = await encodeUrl(store.specs);
+    resultLink.value = await encodeUrl(store.specs);
+    resultPreset.value = await encodePreset(store.specs);
   } catch (e) {
     console.log(e);
     alert(`Encoding error: ${e}`);
@@ -44,7 +48,9 @@ async function generateLink() {
 }
 
 function screenshot() {
-  window.open(getScreenshotUrl(store.specs.url));
+  if(store.formValid) {
+    window.open(getScreenshotUrl(store.specs.url));
+  }
 }
 
 </script>
@@ -54,9 +60,12 @@ function screenshot() {
     <SpecsForm class="specs-form"></SpecsForm>
 <!--    <Btn :active="store.formValid" @click="generateLink">Generate link</Btn>-->
     <Btn :active="store.formValid" @click="screenshot">Screenshot</Btn>
-    <Btn @click="editModalVisible = true">Edit existing task</Btn>
+    <Btn @click="editModalVisible = true">Edit existing task / import preset</Btn>
     <Btn @click="store.reset">Reset Form</Btn>
-    <Copyable v-if="link" :contents="link" class="link-view"></Copyable>
+    <div v-if="resultLink" class="link-label">Link for RSS reader:</div>
+    <Copyable v-if="resultLink" :contents="resultLink" class="link-view"></Copyable>
+    <div v-if="resultPreset" class="link-label">Preset for sharing:</div>
+    <Copyable v-if="resultPreset" :contents="resultPreset" class="link-view"></Copyable>
     <EditUrlModal v-model:visible="editModalVisible" v-model="existingLink"></EditUrlModal>
   </div>
 </template>
@@ -66,13 +75,14 @@ div.wrapper {
   width: 100%;
   max-width: 600px;
   margin: auto;
+  padding-bottom: 50px;
 }
 
 .specs-form {
   margin-bottom: 15px;
 }
 
-.link-view {
-  margin-top: 15px !important;
+.link-label {
+  margin-top: 15px;
 }
 </style>
