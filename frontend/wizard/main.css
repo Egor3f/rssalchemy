@@ -1,8 +1,0 @@
-#ready_url_link, #page_screenshot_link {
-  visibility: hidden;
-}
-
-div.field input {
-  width: 250px;
-  margin-bottom: 4px;
-}
