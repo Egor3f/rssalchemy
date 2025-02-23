@@ -64,13 +64,18 @@ Each worker can process 1 page at a time, so to scale you should run multiple wo
 
 ## Development
 
-You need Go 1.23 (most of application), Node.js 20 (frontend) and Nats server.
+You need 
+- Go 1.23 (most of application), 
+- Node.js 20 (frontend)
+- Nats (with jetstream)
+- Redis
 
 Instaling dependencies example for MacOS:
 
 ```bash
 brew install go@1.23
 brew install node@20
+brew install redis
 brew install nats-server  # Don't use brew services to manage nats because it lacks config support
 go mod download
 cd frontend/wizard-vue && npm install
