@@ -3,6 +3,7 @@ import type {Specs} from "@/urlmaker/specs.ts";
 const apiBase = import.meta.env.VITE_API_BASE || document.location.origin;
 const renderEndpoint = '/api/v1/render/';  // trailing slash
 const screenshotEndpoint = '/api/v1/screenshot';  // no trailing slash
+export const presetPrefix = 'rssalchemy:';
 
 export async function decodeUrl(url: string): Promise<Specs> {
   const splitUrl = url.split(renderEndpoint);
@@ -10,6 +11,18 @@ export async function decodeUrl(url: string): Promise<Specs> {
     throw 'Split failed';
   }
   let encodedData = splitUrl[1];
+  return decodeSpecsPart(encodedData);
+}
+
+export async function decodePreset(preset: string): Promise<Specs> {
+  if(!preset.startsWith(presetPrefix)) {
+    throw 'Invalid preset';
+  }
+  let encodedData = preset.substring(presetPrefix.length);
+  return decodeSpecsPart(encodedData);
+}
+
+export async function decodeSpecsPart(encodedData: string): Promise<Specs> {
   console.log('Data len=' + encodedData.length);
   const m = encodedData.match(/(\d*):?([A-Za-z0-9+/=]+)/);
   if(!m) {
@@ -28,12 +41,20 @@ export async function decodeUrl(url: string): Promise<Specs> {
 }
 
 export async function encodeUrl(specs: Specs): Promise<string> {
+  return `${apiBase}${renderEndpoint}${await encodeSpecsPart(specs)}`
+}
+
+export async function encodePreset(specs: Specs): Promise<string> {
+  return `${presetPrefix}${await encodeSpecsPart(specs)}`;
+}
+
+export async function encodeSpecsPart(specs: Specs): Promise<string> {
   const jsonData = JSON.stringify(specs);
   const buf = await compress(jsonData);
   const encodedData = b64encode(buf);
   console.log('Data len=' + encodedData.length);
   const version = 0;
-  return `${apiBase}${renderEndpoint}${version}:${encodedData}`
+  return `${version}:${encodedData}`;
 }
 
 export function getScreenshotUrl(url: string): string {
@@ -55,7 +76,9 @@ async function compress(s: string): Promise<Uint8Array> {
   let byteArray = new TextEncoder().encode(s);
   let cs = new CompressionStream('deflate-raw');
   let writer = cs.writable.getWriter();
+  // noinspection ES6MissingAwait
   writer.write(byteArray);
+  // noinspection ES6MissingAwait
   writer.close();
   let response = new Response(cs.readable);
   return new Uint8Array(await response.arrayBuffer());
@@ -64,7 +87,9 @@ async function compress(s: string): Promise<Uint8Array> {
 async function decompress(buf: Uint8Array): Promise<string> {
   let ds = new DecompressionStream('deflate-raw');
   let writer = ds.writable.getWriter();
+  // noinspection ES6MissingAwait
   writer.write(buf);
+  // noinspection ES6MissingAwait
   writer.close();
   let response = new Response(ds.readable);
   return response.text();

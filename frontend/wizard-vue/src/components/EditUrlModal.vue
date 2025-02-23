@@ -2,7 +2,7 @@
 
 import Field from "@/components/Field.vue";
 import {type Field as FieldSpec} from "@/urlmaker/specs";
-import {validateUrl} from "@/urlmaker/validators.ts";
+import {validateOr, validatePreset, validateUrl} from "@/urlmaker/validators.ts";
 import Btn from "@/components/Btn.vue";
 import {onMounted, onUnmounted, ref, watch} from "vue";
 import Modal from "@/components/Modal.vue";
@@ -10,10 +10,10 @@ import Modal from "@/components/Modal.vue";
 const field: FieldSpec = {
   name: '',
   input_type: 'url',
-  label: 'URL of feed for editing',
+  label: 'URL of feed or preset',
   default: '',
   required: true,
-  validate: validateUrl,
+  validate: validateOr(validateUrl, validatePreset),
 }
 
 const visible = defineModel('visible');
