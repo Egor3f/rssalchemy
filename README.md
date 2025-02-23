@@ -10,6 +10,7 @@ RSS Alchemy is a website-to-rss converter, like RSSHub, RSS-bridge or Rss.app. H
 - Proxy
 - Results caching
 - Screenshots (primarily for debugging)
+- [Presets](presets) for sharing configurations
 - Stateless[^2] (all task parameters are encoded into url, no database needed)
 - Distruibuted by design (deploy as many workers as you need)
 - Self-hosted; easy to deploy; docker-compose provided
