@@ -32,6 +32,7 @@ watch(store.specs, debounce(() => {
       generate();
     } else {
       resultLink.value = "";
+      resultPreset.value = "";
     }
   }, 100),
   {immediate: true}
