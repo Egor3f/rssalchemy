@@ -50,7 +50,9 @@ func main() {
 
 	e := echo.New()
 	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
+	if !cfg.Debug {
+		e.Use(middleware.Recover())
+	}
 
 	setIPExtractor(e, cfg)
 

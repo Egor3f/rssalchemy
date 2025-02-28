@@ -16,8 +16,10 @@ require (
 	github.com/nats-io/nats.go v1.38.0
 	github.com/playwright-community/playwright-go v0.5001.0
 	github.com/redis/go-redis/v9 v9.7.0
+	github.com/srikrsna/protoc-gen-gotag v1.0.2
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/time v0.8.0
+	google.golang.org/protobuf v1.35.2
 )
 
 require (
@@ -97,7 +99,6 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20240814211410-ddb44dafa142 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240814211410-ddb44dafa142 // indirect
 	google.golang.org/grpc v1.67.1 // indirect
-	google.golang.org/protobuf v1.35.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	olympos.io/encoding/edn v0.0.0-20201019073823-d3554ca0b0a3 // indirect
 )

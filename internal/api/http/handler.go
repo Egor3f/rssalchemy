@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/egor3f/rssalchemy/internal/adapters"
+	"github.com/egor3f/rssalchemy/internal/api/http/pb"
 	"github.com/egor3f/rssalchemy/internal/models"
 	"github.com/egor3f/rssalchemy/internal/validators"
 	"github.com/go-playground/validator/v10"
@@ -16,6 +17,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
 	"golang.org/x/time/rate"
+	"google.golang.org/protobuf/proto"
 	"html"
 	"io"
 	"net/url"
@@ -64,19 +66,6 @@ func (h *Handler) SetupRoutes(g *echo.Group) {
 	g.GET("/screenshot", h.handlePageScreenshot)
 }
 
-type Specs struct {
-	URL                 string `json:"URL" validate:"url"`
-	SelectorPost        string `json:"selector_post" validate:"selector"`
-	SelectorTitle       string `json:"selector_title" validate:"selector"`
-	SelectorLink        string `json:"selector_link" validate:"selector"`
-	SelectorDescription string `json:"selector_description" validate:"omitempty,selector"`
-	SelectorAuthor      string `json:"selector_author" validate:"selector"`
-	SelectorCreated     string `json:"selector_created" validate:"selector"`
-	SelectorContent     string `json:"selector_content" validate:"omitempty,selector"`
-	SelectorEnclosure   string `json:"selector_enclosure" validate:"selector"`
-	CacheLifetime       string `json:"cache_lifetime"`
-}
-
 func (h *Handler) handleRender(c echo.Context) error {
 	specsParam := c.Param("specs")
 	specs, err := h.decodeSpecs(specsParam)
@@ -86,7 +75,7 @@ func (h *Handler) handleRender(c echo.Context) error {
 
 	task := models.Task{
 		TaskType:            models.TaskTypeExtract,
-		URL:                 specs.URL,
+		URL:                 specs.Url,
 		SelectorPost:        specs.SelectorPost,
 		SelectorTitle:       specs.SelectorTitle,
 		SelectorLink:        specs.SelectorLink,
@@ -199,37 +188,44 @@ func (h *Handler) checkRateLimit(c echo.Context) bool {
 	return limiter.Allow()
 }
 
-func (h *Handler) decodeSpecs(specsParam string) (Specs, error) {
+func (h *Handler) decodeSpecs(specsParam string) (*pb.Specs, error) {
 	var err error
 	version := 0
 	paramSplit := strings.Split(specsParam, ":")
 	if len(paramSplit) == 2 {
 		version, err = strconv.Atoi(paramSplit[0])
 		if err != nil {
-			return Specs{}, fmt.Errorf("invalid version: %s", paramSplit[0])
+			return nil, fmt.Errorf("invalid version: %s", paramSplit[0])
 		}
 		specsParam = paramSplit[1]
 	}
 
-	if version != 0 {
-		return Specs{}, fmt.Errorf("unknown version: %d", version)
-	}
-
 	decodedSpecsParam, err := base64.StdEncoding.WithPadding(base64.NoPadding).DecodeString(specsParam)
 	if err != nil {
-		return Specs{}, fmt.Errorf("failed to decode specs: %w", err)
+		return nil, fmt.Errorf("failed to decode specs: %w", err)
 	}
 	rc := flate.NewReader(bytes.NewReader(decodedSpecsParam))
 	decodedSpecsParam, err = io.ReadAll(rc)
 	if err != nil {
-		return Specs{}, fmt.Errorf("failed to unzip specs: %w", err)
+		return nil, fmt.Errorf("failed to unzip specs: %w", err)
 	}
-	var specs Specs
-	if err := json.Unmarshal(decodedSpecsParam, &specs); err != nil {
-		return Specs{}, fmt.Errorf("failed to unmarshal specs: %w", err)
+
+	specs := &pb.Specs{}
+	switch version {
+	case 0:
+		if err := json.Unmarshal(decodedSpecsParam, specs); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal json specs: %w", err)
+		}
+	case 1:
+		if err := proto.Unmarshal(decodedSpecsParam, specs); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal proto specs: %w", err)
+		}
+	default:
+		return nil, fmt.Errorf("unknown version: %d", version)
 	}
+
 	if err := h.validate.Struct(specs); err != nil {
-		return Specs{}, fmt.Errorf("specs are invalid: %w", err)
+		return nil, fmt.Errorf("specs are invalid: %w", err)
 	}
 	return specs, nil
 }
