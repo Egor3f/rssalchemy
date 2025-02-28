@@ -3,7 +3,6 @@
  * compiler version: 5.29.3
  * source: proto/specs.proto
  * git: https://github.com/thesayyn/protoc-gen-ts */
-import * as dependency_1 from "./../tagger/tagger";
 import * as pb_1 from "google-protobuf";
 export namespace rssalchemy {
     export class Specs extends pb_1.Message {

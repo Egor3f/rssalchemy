@@ -4,7 +4,10 @@ all:
 
 js_proto:
 	protoc -I=. -I=${PROTOBUF_TAGGER_PATH} --ts_out=./frontend/wizard-vue/src/urlmaker ./proto/specs.proto
-	sed -i '1 i //@ts-nocheck' ./frontend/wizard-vue/src/urlmaker/google/protobuf/descriptor.ts
+	# Remove unneeded code left from GO plugin (and corresponsing unused import)
+	sed -i -E '/import.+tagger\/tagger/d' ./frontend/wizard-vue/src/urlmaker/proto/specs.ts
+	rm -rf ./frontend/wizard-vue/src/urlmaker/google
+	rm -rf ./frontend/wizard-vue/src/urlmaker/tagger
 
 go_proto:
 	protoc -I=. -I=${PROTOBUF_TAGGER_PATH} --go_out=. ./proto/specs.proto
