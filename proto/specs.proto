@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package rssalchemy;
+
+import "tagger/tagger.proto";
+
+option go_package = "internal/api/http/pb";
+
+message Specs {
+  string url = 1 [(tagger.tags) = "json:\"url\" validate:\"url\""];
+  string selector_post = 2 [(tagger.tags) = "json:\"selector_post\" validate:\"selector\""];
+  string selector_title = 3 [(tagger.tags) = "json:\"selector_title\" validate:\"selector\""];
+  string selector_link = 4 [(tagger.tags) = "json:\"selector_link\" validate:\"selector\""];
+  string selector_description = 5 [(tagger.tags) = "json:\"selector_description\" validate:\"omitempty,selector\""];
+  string selector_author = 6 [(tagger.tags) = "json:\"selector_author\" validate:\"selector\""];
+  string selector_created = 7 [(tagger.tags) = "json:\"selector_created\" validate:\"selector\""];
+  string selector_content = 8 [(tagger.tags) = "json:\"selector_content\" validate:\"omitempty,selector\""];
+  string selector_enclosure = 9 [(tagger.tags) = "json:\"selector_enclosure\" validate:\"selector\""];
+  string cache_lifetime = 10 [(tagger.tags) = "json:\"cache_lifetime\""];
+}

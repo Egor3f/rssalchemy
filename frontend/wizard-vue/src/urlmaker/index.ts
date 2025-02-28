@@ -1,4 +1,6 @@
 import type {Specs} from "@/urlmaker/specs.ts";
+import {b64decode, b64encode, compress, decompress, decompressString} from "@/urlmaker/utils.ts";
+import {rssalchemy as pb} from '@/urlmaker/proto/specs.ts';
 
 const apiBase = import.meta.env.VITE_API_BASE || document.location.origin;
 const renderEndpoint = '/api/v1/render/';  // trailing slash
@@ -23,7 +25,7 @@ export async function decodePreset(preset: string): Promise<Specs> {
 }
 
 export async function decodeSpecsPart(encodedData: string): Promise<Specs> {
-  console.log('Data len=' + encodedData.length);
+  console.log('Decoded data len=' + encodedData.length);
   const m = encodedData.match(/(\d*):?([A-Za-z0-9+/=]+)/);
   if(!m) {
     throw 'Regex failed';
@@ -33,11 +35,17 @@ export async function decodeSpecsPart(encodedData: string): Promise<Specs> {
   encodedData = m[2];
 
   let buf = b64decode(encodedData);
-  if (version === 0) {
-    const jsonData = await decompress(buf);
-    return JSON.parse(jsonData);
+  switch (version) {
+    case 0:
+      const jsonData = await decompressString(buf);
+      return JSON.parse(jsonData);
+    case 1:
+      const data = await decompress(buf);
+      //@ts-ignore
+      return pb.Specs.deserializeBinary(data).toObject();
+    default:
+      throw 'Unknown version'
   }
-  throw 'Unknown version'
 }
 
 export async function encodeUrl(specs: Specs): Promise<string> {
@@ -49,48 +57,15 @@ export async function encodePreset(specs: Specs): Promise<string> {
 }
 
 export async function encodeSpecsPart(specs: Specs): Promise<string> {
-  const jsonData = JSON.stringify(specs);
-  const buf = await compress(jsonData);
-  const encodedData = b64encode(buf);
-  console.log('Data len=' + encodedData.length);
-  const version = 0;
+  const pbSpecs = pb.Specs.fromObject(specs);
+  let data = pbSpecs.serializeBinary();
+  data = await compress(data);
+  const encodedData = b64encode(data);
+  console.log('Encoded data len=' + encodedData.length);
+  const version = 1;
   return `${version}:${encodedData}`;
 }
 
 export function getScreenshotUrl(url: string): string {
   return `${apiBase}${screenshotEndpoint}?url=${encodeURIComponent(url)}`;
-}
-
-function b64encode(buf: Uint8Array): string {
-  // @ts-ignore
-  const b64str = btoa(String.fromCharCode.apply(null, buf));
-  // @ts-ignore
-  return b64str.replaceAll('=', '');
-}
-
-function b64decode(s: string): Uint8Array {
-  return Uint8Array.from(atob(s), c => c.charCodeAt(0));
-}
-
-async function compress(s: string): Promise<Uint8Array> {
-  let byteArray = new TextEncoder().encode(s);
-  let cs = new CompressionStream('deflate-raw');
-  let writer = cs.writable.getWriter();
-  // noinspection ES6MissingAwait
-  writer.write(byteArray);
-  // noinspection ES6MissingAwait
-  writer.close();
-  let response = new Response(cs.readable);
-  return new Uint8Array(await response.arrayBuffer());
-}
-
-async function decompress(buf: Uint8Array): Promise<string> {
-  let ds = new DecompressionStream('deflate-raw');
-  let writer = ds.writable.getWriter();
-  // noinspection ES6MissingAwait
-  writer.write(buf);
-  // noinspection ES6MissingAwait
-  writer.close();
-  let response = new Response(ds.readable);
-  return response.text();
 }
