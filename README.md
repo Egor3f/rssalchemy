@@ -1,4 +1,7 @@
-# RSS Alchemy
+
+<p align="center">
+<img src="frontend/wizard-vue/src/assets/logo.png" alt="logo" width="300"/>
+</p>
 
 ## About
 
