@@ -39,7 +39,11 @@ youtube
 
 ## Project status
 
-Program is still under development. The code architecture is not final, no CI, no demo page, etc...
+Program is still under development. The code architecture is not final, no CI, etc...
+
+## Demo instance
+
+[rssalchemy.efprojects.com](https://rssalchemy.efprojects.com)
 
 ## Deployment
 
