@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
+import ForkMe from "@/components/ForkMe.vue";
 </script>
 
 <template>
@@ -9,6 +10,7 @@ import { RouterView } from 'vue-router'
     </div>
   </div>
   <RouterView />
+  <ForkMe></ForkMe>
 </template>
 
 <style scoped lang="scss">
