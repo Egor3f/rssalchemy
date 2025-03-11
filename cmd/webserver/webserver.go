@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	wizard_vue "github.com/egor3f/rssalchemy/frontend/wizard-vue"
 	"github.com/egor3f/rssalchemy/internal/adapters/natsadapter"
 	httpApi "github.com/egor3f/rssalchemy/internal/api/http"
@@ -56,7 +57,11 @@ func main() {
 
 	setIPExtractor(e, cfg)
 
-	e.StaticFS("/", echo.MustSubFS(wizard_vue.EmbedFS, wizard_vue.FSPrefix))
+	cacheGroup := e.Group("", addCacheControlHeader(1*time.Hour))
+	cacheGroup.Use(middleware.StaticWithConfig(middleware.StaticConfig{
+		Root:       wizard_vue.FSPrefix,
+		Filesystem: http.FS(wizard_vue.EmbedFS),
+	}))
 
 	apiHandler := httpApi.New(
 		na,
@@ -77,6 +82,18 @@ func main() {
 	defer cancel()
 	if err := e.Shutdown(ctx); err != nil {
 		e.Logger.Errorf("failed to shutdown server: %v", err)
+	}
+}
+
+func addCacheControlHeader(ttl time.Duration) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			c.Response().Header().Set(
+				echo.HeaderCacheControl,
+				fmt.Sprintf("public, max-age=%d", int(ttl.Seconds())),
+			)
+			return next(c)
+		}
 	}
 }
 
