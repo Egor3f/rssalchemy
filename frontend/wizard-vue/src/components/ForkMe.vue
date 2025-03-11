@@ -1,7 +1,7 @@
 <template>
   <a href="https://github.com/egor3f/rssalchemy" target="_blank">
     <img decoding="async" width="149" height="149"
-         src="https://github.blog/wp-content/uploads/2008/12/forkme_right_darkblue_121621.png"
+         src="https://github.blog/wp-content/uploads/2008/12/forkme_right_gray_6d6d6d.png"
          class="attachment-full size-full" alt="Fork me on GitHub" loading="lazy">
   </a>
 </template>
