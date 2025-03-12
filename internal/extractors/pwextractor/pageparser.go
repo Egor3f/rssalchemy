@@ -80,16 +80,6 @@ func (p *pageParser) waitFullLoad() {
 		log.Debugf("WaitFor LoadState finished with %v", err)
 		cancel()
 	}()
-	go func() {
-		err := p.page.Locator(p.task.SelectorPost).Locator(p.task.SelectorTitle).Last().WaitFor(
-			playwright.LocatorWaitForOptions{
-				State:   playwright.WaitForSelectorStateVisible,
-				Timeout: timeout,
-			},
-		)
-		log.Debugf("WaitFor LOCATOR finished with %v", err)
-		cancel()
-	}()
 
 	<-ctx.Done()
 }
