@@ -42,6 +42,7 @@ async function generate() {
   try {
     resultLink.value = await encodeUrl(store.specs);
     resultPreset.value = await encodePreset(store.specs);
+    console.debug(JSON.stringify(store.specs));
   } catch (e) {
     console.log(e);
     alert(`Encoding error: ${e}`);
