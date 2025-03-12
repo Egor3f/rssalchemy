@@ -7,6 +7,7 @@ import (
 	dummycookies "github.com/egor3f/rssalchemy/internal/cookiemgr/dummy"
 	"github.com/egor3f/rssalchemy/internal/dateparser"
 	"github.com/egor3f/rssalchemy/internal/extractors/pwextractor"
+	"github.com/egor3f/rssalchemy/internal/limiter/dummy"
 	"github.com/egor3f/rssalchemy/internal/models"
 	"github.com/labstack/gommon/log"
 	"io"
@@ -65,6 +66,7 @@ func main() {
 			},
 		},
 		CookieManager: dummycookies.New(),
+		Limiter:       &dummy.Limiter{},
 	})
 	if err != nil {
 		log.Panicf("create pw extractor: %v", err)
