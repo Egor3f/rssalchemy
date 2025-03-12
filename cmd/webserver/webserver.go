@@ -68,6 +68,7 @@ func main() {
 		na,
 		rate.Every(time.Duration(float64(time.Second)*cfg.TaskRateLimitEvery)),
 		cfg.TaskRateLimitBurst,
+		cfg.Debug,
 	)
 	apiHandler.SetupRoutes(e.Group("/api/v1"))
 

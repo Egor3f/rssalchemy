@@ -41,9 +41,10 @@ type Handler struct {
 	rateLimitBurst int
 	limits         map[string]*rate.Limiter
 	limitsMu       sync.RWMutex
+	debug          bool
 }
 
-func New(wq adapters.WorkQueue, cache adapters.Cache, rateLimit rate.Limit, rateLimitBurst int) *Handler {
+func New(wq adapters.WorkQueue, cache adapters.Cache, rateLimit rate.Limit, rateLimitBurst int, debug bool) *Handler {
 	if wq == nil || cache == nil {
 		panic("you fckd up with di again")
 	}
@@ -53,6 +54,7 @@ func New(wq adapters.WorkQueue, cache adapters.Cache, rateLimit rate.Limit, rate
 		rateLimit:      rateLimit,
 		rateLimitBurst: rateLimitBurst,
 		limits:         make(map[string]*rate.Limiter),
+		debug:          debug,
 	}
 	h.validate = validator.New(validator.WithRequiredStructEnabled())
 	if err := h.validate.RegisterValidation("selector", validators.ValidateSelector); err != nil {
@@ -97,6 +99,9 @@ func (h *Handler) handleRender(c echo.Context) error {
 	if cacheLifetime > maxLifetime {
 		cacheLifetime = maxLifetime
 	}
+	if h.debug {
+		cacheLifetime = 0
+	}
 
 	timeoutCtx, cancel := context.WithTimeout(context.Background(), taskTimeout)
 	defer cancel()
@@ -105,6 +110,7 @@ func (h *Handler) handleRender(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(500, fmt.Errorf("task marshal error: %v", err))
 	}
+	log.Debugf("Encoded task: %s", encodedTask)
 
 	taskResultBytes, cachedTS, err := h.cache.Get(task.CacheKey())
 	if err != nil && !errors.Is(err, adapters.ErrKeyNotFound) {
