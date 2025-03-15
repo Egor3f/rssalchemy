@@ -287,7 +287,7 @@ func (e *PwExtractor) Screenshot(task models.Task) (result *models.ScreenshotTas
 		if err != nil {
 			log.Debugf("Wait for network idle: %v", err)
 		}
-		if err := page.SetViewportSize(1280, 800); err != nil {
+		if err := page.SetViewportSize(1280, 5000); err != nil {
 			return fmt.Errorf("set viewport size: %w", err)
 		}
 		screenshot, err := page.Screenshot(playwright.PageScreenshotOptions{
