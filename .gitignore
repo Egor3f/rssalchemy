@@ -8,3 +8,4 @@
 /screenshot*.png
 node_modules
 .vite
+*~
