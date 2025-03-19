@@ -28,7 +28,7 @@ func New(
 	capacity int64,
 	redisClient *redis.Client,
 	prefix string,
-) (*Limiter, error) {
+) *Limiter {
 	l := Limiter{
 		rate:        time.Duration(float64(time.Second) / float64(rateLimit)),
 		capacity:    capacity,
@@ -36,7 +36,7 @@ func New(
 		redisPool:   rsgoredis.NewPool(redisClient),
 		prefix:      prefix,
 	}
-	return &l, nil
+	return &l
 }
 
 func (l *Limiter) Limit(ctx context.Context, key string) (time.Duration, error) {

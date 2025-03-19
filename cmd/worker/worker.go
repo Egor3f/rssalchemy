@@ -70,7 +70,7 @@ func main() {
 		log.Panicf("redis ping: %v", err)
 	}
 
-	perDomainLimiter, err := redisleaky.New(
+	perDomainLimiter := redisleaky.New(
 		rate.Every(time.Duration(float64(time.Second)*cfg.PerDomainRateLimitEvery)),
 		int64(cfg.PerDomainRateLimitCapacity),
 		redisClient,
