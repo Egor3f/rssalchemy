@@ -2,6 +2,7 @@ package pwextractor
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/egor3f/rssalchemy/internal/limiter"
 	"github.com/egor3f/rssalchemy/internal/models"
@@ -93,6 +94,8 @@ func (e *PwExtractor) Stop() error {
 	}
 	return nil
 }
+
+const MAX_RETRIES = 3 // todo: config
 
 func (e *PwExtractor) visitPage(task models.Task, cb func(page playwright.Page) error) (errRet error) {
 
@@ -214,7 +217,13 @@ func (e *PwExtractor) visitPage(task models.Task, cb func(page playwright.Page) 
 		}
 	}
 
-	if _, err := page.Goto(task.URL, playwright.PageGotoOptions{Timeout: pwDuration("10s")}); err != nil {
+	for retry := 0; retry < MAX_RETRIES; retry++ {
+		_, err = page.Goto(task.URL, playwright.PageGotoOptions{Timeout: pwDuration("10s")})
+		if !errors.Is(err, playwright.ErrTimeout) {
+			break
+		}
+	}
+	if err != nil {
 		return fmt.Errorf("goto page: %w", err)
 	}
 	log.Debugf("Url %s visited, starting cb", task.URL)
