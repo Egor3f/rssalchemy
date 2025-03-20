@@ -222,6 +222,7 @@ func (e *PwExtractor) visitPage(task models.Task, cb func(page playwright.Page) 
 		if !errors.Is(err, playwright.ErrTimeout) {
 			break
 		}
+		log.Infof("Retrying page goto (%d of %d) %s", retry, MAX_RETRIES, task.URL)
 	}
 	if err != nil {
 		return fmt.Errorf("goto page: %w", err)
