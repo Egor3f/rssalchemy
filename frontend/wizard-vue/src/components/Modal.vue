@@ -14,7 +14,7 @@ const visible = defineModel();
 
 <style scoped lang="scss">
 div.modal-wrapper {
-  position: absolute;
+  position: fixed;
   left: 0;
   top: 0;
   width: 100vw;
