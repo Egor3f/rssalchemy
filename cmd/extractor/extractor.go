@@ -10,10 +10,10 @@ import (
 	"github.com/egor3f/rssalchemy/internal/extractors/pwextractor"
 	"github.com/egor3f/rssalchemy/internal/limiter/dummy"
 	"github.com/egor3f/rssalchemy/internal/models"
+	"github.com/felixge/fgtrace"
 	"github.com/labstack/gommon/log"
 	"io"
 	"os"
-	"runtime/pprof"
 	"time"
 )
 
@@ -27,15 +27,8 @@ func main() {
 	flag.Parse()
 
 	if *useProfiler {
-		profFile, err := os.Create("cpu.prof")
-		if err != nil {
-			log.Fatalf("Profile create file: %v", err)
-		}
-		defer profFile.Close()
-		if err := pprof.StartCPUProfile(profFile); err != nil {
-			log.Fatalf("Start CPU profile: %v", err)
-		}
-		defer pprof.StopCPUProfile()
+		//goland:noinspection GoUnhandledErrorResult
+		defer fgtrace.Config{Dst: fgtrace.File("fgtrace.json")}.Trace().Stop()
 	}
 
 	taskFileName := "task.json"

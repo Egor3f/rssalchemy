@@ -4,6 +4,7 @@ go 1.23
 
 require (
 	github.com/ericchiang/css v1.4.0
+	github.com/felixge/fgtrace v0.2.0
 	github.com/go-playground/validator/v10 v10.23.0
 	github.com/go-redsync/redsync/v4 v4.8.1
 	github.com/gorilla/feeds v1.2.0
@@ -24,6 +25,7 @@ require (
 
 require (
 	github.com/BurntSushi/toml v1.2.1 // indirect
+	github.com/DataDog/gostackparse v0.6.0 // indirect
 	github.com/alessandro-c/gomemcached-lock v1.0.0 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.32.5 // indirect
