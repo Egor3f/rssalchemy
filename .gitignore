@@ -10,3 +10,4 @@ node_modules
 .vite
 *~
 *.prof
+/fgtrace.json
