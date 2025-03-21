@@ -28,7 +28,7 @@ func main() {
 
 	if *useProfiler {
 		//goland:noinspection GoUnhandledErrorResult
-		defer fgtrace.Config{Dst: fgtrace.File("fgtrace.json")}.Trace().Stop()
+		defer fgtrace.Config{Dst: fgtrace.File(fmt.Sprintf("fgtrace_%d.json", time.Now().Unix()))}.Trace().Stop()
 	}
 
 	taskFileName := "task.json"
