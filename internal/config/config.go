@@ -43,6 +43,9 @@ func Read() (Config, error) {
 		panic(fmt.Errorf("register validation: %w", err))
 	}
 	err = validate.Struct(cfg)
+	if err == nil {
+		fmt.Printf("Config: %+v\n", cfg)
+	}
 	return cfg, err
 }
 
