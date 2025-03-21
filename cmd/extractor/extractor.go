@@ -13,6 +13,7 @@ import (
 	"github.com/labstack/gommon/log"
 	"io"
 	"os"
+	"runtime/pprof"
 	"time"
 )
 
@@ -22,7 +23,20 @@ func main() {
 
 	outFile := flag.String("o", "", "Output file name")
 	skipOutput := flag.Bool("s", false, "Skip json output; show just logs")
+	useProfiler := flag.Bool("p", false, "Use profiler")
 	flag.Parse()
+
+	if *useProfiler {
+		profFile, err := os.Create("cpu.prof")
+		if err != nil {
+			log.Fatalf("Profile create file: %v", err)
+		}
+		defer profFile.Close()
+		if err := pprof.StartCPUProfile(profFile); err != nil {
+			log.Fatalf("Start CPU profile: %v", err)
+		}
+		defer pprof.StopCPUProfile()
+	}
 
 	taskFileName := "task.json"
 	if flag.NArg() > 0 {
