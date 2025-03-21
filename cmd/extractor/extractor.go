@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"github.com/egor3f/rssalchemy/internal/config"
 	dummycookies "github.com/egor3f/rssalchemy/internal/cookiemgr/dummy"
 	"github.com/egor3f/rssalchemy/internal/dateparser"
@@ -20,6 +21,7 @@ func main() {
 	log.SetHeader(`${time_rfc3339_nano} ${level}`)
 
 	outFile := flag.String("o", "", "Output file name")
+	skipOutput := flag.Bool("s", false, "Skip json output; show just logs")
 	flag.Parse()
 
 	taskFileName := "task.json"
@@ -38,19 +40,9 @@ func main() {
 		defer out.Close()
 	}
 
-	taskFile, err := os.Open(taskFileName)
+	task, err := loadTask(taskFileName)
 	if err != nil {
-		log.Panicf("open task file: %v", err)
-	}
-	//goland:noinspection GoUnhandledErrorResult
-	defer taskFile.Close()
-	fileContents, err := io.ReadAll(taskFile)
-	if err != nil {
-		log.Panicf("read file: %v", err)
-	}
-	var task models.Task
-	if err := json.Unmarshal(fileContents, &task); err != nil {
-		log.Panicf("unmarshal task: %v", err)
+		log.Panicf("load task: %v", err)
 	}
 
 	cfg, err := config.Read()
@@ -94,13 +86,35 @@ func main() {
 		panic(err)
 	}
 
-	resultStr, err := json.MarshalIndent(result, "", "\t")
-	if err != nil {
-		log.Panicf("marshal result: %v", err)
+	if !*skipOutput {
+		resultStr, err := json.MarshalIndent(result, "", "\t")
+		if err != nil {
+			log.Panicf("marshal result: %v", err)
+		}
+		n, err := out.Write(resultStr)
+		if err != nil {
+			log.Panicf("write output: %v", err)
+		}
+		log.Infof("Result written (%d bytes)", n)
 	}
-	n, err := out.Write(resultStr)
+}
+
+func loadTask(taskFileName string) (models.Task, error) {
+	taskFile, err := os.Open(taskFileName)
 	if err != nil {
-		log.Panicf("write output: %v", err)
+		return models.Task{}, fmt.Errorf("open task file: %w", err)
 	}
-	log.Infof("Result written (%d bytes)", n)
+	defer taskFile.Close()
+
+	fileContents, err := io.ReadAll(taskFile)
+	if err != nil {
+		return models.Task{}, fmt.Errorf("read file: %w", err)
+	}
+
+	var task models.Task
+	if err := json.Unmarshal(fileContents, &task); err != nil {
+		return models.Task{}, fmt.Errorf("unmarshal task: %w", err)
+	}
+
+	return task, err
 }
