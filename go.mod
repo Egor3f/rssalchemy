@@ -78,9 +78,11 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/nats-io/nkeys v0.4.9 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
+	github.com/patriciy/adblock v0.0.0-20201201143319-2c60183c9ccc // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/samuel/go-zookeeper v0.0.0-20201211165307-7117e9ea2414 // indirect
+	github.com/scrapinghub/adblockgoparser v0.0.0-20200421080733-539a8d1534d6 // indirect
 	github.com/tetratelabs/wazero v1.2.1 // indirect
 	github.com/thanhpk/randstr v1.0.4 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
