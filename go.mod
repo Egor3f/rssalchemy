@@ -15,8 +15,10 @@ require (
 	github.com/markusmobius/go-dateparser v1.2.3
 	github.com/mennanov/limiters v1.11.0
 	github.com/nats-io/nats.go v1.38.0
+	github.com/patriciy/adblock v0.0.0-20201201143319-2c60183c9ccc
 	github.com/playwright-community/playwright-go v0.5001.0
 	github.com/redis/go-redis/v9 v9.7.0
+	github.com/scrapinghub/adblockgoparser v0.0.0-20200421080733-539a8d1534d6
 	github.com/srikrsna/protoc-gen-gotag v1.0.2
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/time v0.8.0

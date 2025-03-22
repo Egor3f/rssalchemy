@@ -10,6 +10,7 @@ import (
 	"github.com/playwright-community/playwright-go"
 	"maps"
 	"net"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -33,6 +34,8 @@ type PwExtractor struct {
 	cookieManager CookieManager
 	limiter       limiter.Limiter
 	proxyIP       net.IP
+	allowed       int
+	blocked       int
 }
 
 type Config struct {
@@ -145,42 +148,8 @@ func (e *PwExtractor) visitPage(task models.Task, cb func(page playwright.Page) 
 		}
 	}()
 
-	if err := bCtx.Route("**", func(route playwright.Route) {
-		log.Debugf("Route: %s", route.Request().URL())
-		allowHost, err := e.allowHost(route.Request().URL())
-		if err != nil {
-			log.Errorf("Allow host: %v", err)
-			allowHost = false
-		}
-		if allowHost {
-			if err := route.Continue(); err != nil {
-				log.Warnf("Route continue error: %v", err)
-			}
-		} else {
-			if err := route.Abort(); err != nil {
-				log.Warnf("Route abort error: %v", err)
-			}
-		}
-	}); err != nil {
-		return fmt.Errorf("set route: %w", err)
-	}
-
-	if err := bCtx.RouteWebSocket("**", func(route playwright.WebSocketRoute) {
-		log.Debugf("Websocket route: %s", route.URL())
-		allowHost, err := e.allowHost(route.URL())
-		if err != nil {
-			log.Errorf("Allow host: %v", err)
-			allowHost = false
-		}
-		if allowHost {
-			if _, err := route.ConnectToServer(); err != nil {
-				log.Warnf("Websocket connect error: %v", err)
-			}
-		} else {
-			route.Close()
-		}
-	}); err != nil {
-		return fmt.Errorf("websocket set route: %w", err)
+	if err := e.setupInterceptors(bCtx); err != nil {
+		return fmt.Errorf("setup interceptors: %w", err)
 	}
 
 	if len(cookies) > 0 {
@@ -231,7 +200,13 @@ func (e *PwExtractor) visitPage(task models.Task, cb func(page playwright.Page) 
 
 	start := time.Now()
 	err = cb(page)
-	log.Infof("Visiting page %s finished, time=%f secs, err=%v", task.URL, time.Since(start).Seconds(), err)
+	log.Infof(
+		"Visiting page %s finished, time=%f secs, allowed hosts=%d, blocked hosts=%d, err=%v",
+		task.URL,
+		time.Since(start).Seconds(),
+		e.allowed, e.blocked,
+		err,
+	)
 
 	if len(cookies) > 0 {
 		bCookies, err := bCtx.Cookies(fmt.Sprintf("%s://%s", scheme, baseDomain))
@@ -252,10 +227,67 @@ func (e *PwExtractor) visitPage(task models.Task, cb func(page playwright.Page) 
 	return err
 }
 
+func (e *PwExtractor) setupInterceptors(bCtx playwright.BrowserContext) error {
+	if err := bCtx.Route("**", func(route playwright.Route) {
+		log.Debugf("Route: %s", route.Request().URL())
+		allowHost, err := e.allowHost(route.Request().URL())
+		if err != nil {
+			log.Errorf("Allow host: %v", err)
+			allowHost = false
+		}
+		URL, err := url.Parse(route.Request().URL())
+		if err != nil {
+			log.Errorf("Interceptor parse url: %v", err)
+			allowHost = false
+		}
+		allowHost = allowHost && allowAdblock(URL)
+		if allowHost {
+			e.allowed++
+			if err := route.Continue(); err != nil {
+				log.Warnf("Route continue error: %v", err)
+			}
+		} else {
+			e.blocked++
+			if err := route.Abort(); err != nil {
+				log.Warnf("Route abort error: %v", err)
+			}
+		}
+	}); err != nil {
+		return fmt.Errorf("set route: %w", err)
+	}
+
+	if err := bCtx.RouteWebSocket("**", func(route playwright.WebSocketRoute) {
+		log.Debugf("Websocket route: %s", route.URL())
+		allowHost, err := e.allowHost(route.URL())
+		if err != nil {
+			log.Errorf("Allow host: %v", err)
+			allowHost = false
+		}
+		URL, err := url.Parse(route.URL())
+		if err != nil {
+			log.Errorf("Interceptor websocket parse url: %v", err)
+			allowHost = false
+		}
+		allowHost = allowHost && allowAdblock(URL)
+		if allowHost {
+			e.allowed++
+			if _, err := route.ConnectToServer(); err != nil {
+				log.Warnf("Websocket connect error: %v", err)
+			}
+		} else {
+			e.blocked++
+			route.Close()
+		}
+	}); err != nil {
+		return fmt.Errorf("websocket set route: %w", err)
+	}
+	return nil
+}
+
 func (e *PwExtractor) allowHost(rawUrl string) (bool, error) {
 	ips, err := getIPs(rawUrl)
 	if err != nil {
-		return false, fmt.Errorf("allow host get ips: %w", err)
+		return false, fmt.Errorf("allowAdblock host get ips: %w", err)
 	}
 	for _, ip := range ips {
 		deny := ip.IsPrivate() || ip.IsLoopback() || ip.IsUnspecified() || ip.IsLinkLocalUnicast() || ip.IsMulticast()
