@@ -18,7 +18,7 @@ import (
 )
 
 func main() {
-	log.SetLevel(log.DEBUG)
+	//log.SetLevel(log.DEBUG)
 	log.SetHeader(`${time_rfc3339_nano} ${level}`)
 
 	outFile := flag.String("o", "", "Output file name")
