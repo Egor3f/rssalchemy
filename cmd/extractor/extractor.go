@@ -10,7 +10,7 @@ import (
 	"github.com/egor3f/rssalchemy/internal/extractors/pwextractor"
 	"github.com/egor3f/rssalchemy/internal/limiter/dummy"
 	"github.com/egor3f/rssalchemy/internal/models"
-	"github.com/felixge/fgtrace"
+	"github.com/felixge/fgprof"
 	"github.com/labstack/gommon/log"
 	"io"
 	"os"
@@ -28,7 +28,13 @@ func main() {
 
 	if *useProfiler {
 		//goland:noinspection GoUnhandledErrorResult
-		defer fgtrace.Config{Dst: fgtrace.File(fmt.Sprintf("fgtrace_%d.json", time.Now().Unix()))}.Trace().Stop()
+		//defer fgtrace.Config{Dst: fgtrace.File(fmt.Sprintf("fgtrace_%d.json", time.Now().Unix()))}.Trace().Stop()
+		w, err := os.Create(fmt.Sprintf("fgprof_%d.prof", time.Now().Unix()))
+		if err != nil {
+			panic(fmt.Sprintf("frprof create file: %v", err))
+		}
+		stop := fgprof.Start(w, fgprof.FormatPprof)
+		defer stop()
 	}
 
 	taskFileName := "task.json"
