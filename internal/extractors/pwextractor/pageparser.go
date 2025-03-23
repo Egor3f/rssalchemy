@@ -64,6 +64,9 @@ func (p *pageParser) parse() (*models.TaskResult, error) {
 		}
 		result.Items = append(result.Items, item)
 	}
+	if len(result.Items) == 0 {
+		return nil, fmt.Errorf("extract failed for all posts")
+	}
 
 	return &result, nil
 }

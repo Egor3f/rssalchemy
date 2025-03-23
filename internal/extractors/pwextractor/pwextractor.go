@@ -287,9 +287,6 @@ func (e *PwExtractor) Extract(task models.Task) (result *models.TaskResult, errR
 		if err != nil {
 			return fmt.Errorf("parse page: %w", err)
 		}
-		if len(result.Items) == 0 {
-			return fmt.Errorf("extract failed for all posts")
-		}
 		return nil
 	})
 	return
