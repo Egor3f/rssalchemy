@@ -145,42 +145,8 @@ func (e *PwExtractor) visitPage(task models.Task, cb func(page playwright.Page) 
 		}
 	}()
 
-	if err := bCtx.Route("**", func(route playwright.Route) {
-		log.Debugf("Route: %s", route.Request().URL())
-		allowHost, err := e.allowHost(route.Request().URL())
-		if err != nil {
-			log.Errorf("Allow host: %v", err)
-			allowHost = false
-		}
-		if allowHost {
-			if err := route.Continue(); err != nil {
-				log.Warnf("Route continue error: %v", err)
-			}
-		} else {
-			if err := route.Abort(); err != nil {
-				log.Warnf("Route abort error: %v", err)
-			}
-		}
-	}); err != nil {
-		return fmt.Errorf("set route: %w", err)
-	}
-
-	if err := bCtx.RouteWebSocket("**", func(route playwright.WebSocketRoute) {
-		log.Debugf("Websocket route: %s", route.URL())
-		allowHost, err := e.allowHost(route.URL())
-		if err != nil {
-			log.Errorf("Allow host: %v", err)
-			allowHost = false
-		}
-		if allowHost {
-			if _, err := route.ConnectToServer(); err != nil {
-				log.Warnf("Websocket connect error: %v", err)
-			}
-		} else {
-			route.Close()
-		}
-	}); err != nil {
-		return fmt.Errorf("websocket set route: %w", err)
+	if err := e.setupInterceptors(bCtx); err != nil {
+		return fmt.Errorf("setup interceptors: %w", err)
 	}
 
 	if len(cookies) > 0 {
@@ -250,6 +216,47 @@ func (e *PwExtractor) visitPage(task models.Task, cb func(page playwright.Page) 
 	}
 
 	return err
+}
+
+func (e *PwExtractor) setupInterceptors(bCtx playwright.BrowserContext) error {
+	if err := bCtx.Route("**", func(route playwright.Route) {
+		log.Debugf("Route: %s", route.Request().URL())
+		allowHost, err := e.allowHost(route.Request().URL())
+		if err != nil {
+			log.Errorf("Allow host: %v", err)
+			allowHost = false
+		}
+		if allowHost {
+			if err := route.Continue(); err != nil {
+				log.Warnf("Route continue error: %v", err)
+			}
+		} else {
+			if err := route.Abort(); err != nil {
+				log.Warnf("Route abort error: %v", err)
+			}
+		}
+	}); err != nil {
+		return fmt.Errorf("set route: %w", err)
+	}
+
+	if err := bCtx.RouteWebSocket("**", func(route playwright.WebSocketRoute) {
+		log.Debugf("Websocket route: %s", route.URL())
+		allowHost, err := e.allowHost(route.URL())
+		if err != nil {
+			log.Errorf("Allow host: %v", err)
+			allowHost = false
+		}
+		if allowHost {
+			if _, err := route.ConnectToServer(); err != nil {
+				log.Warnf("Websocket connect error: %v", err)
+			}
+		} else {
+			route.Close()
+		}
+	}); err != nil {
+		return fmt.Errorf("websocket set route: %w", err)
+	}
+	return nil
 }
 
 func (e *PwExtractor) allowHost(rawUrl string) (bool, error) {
