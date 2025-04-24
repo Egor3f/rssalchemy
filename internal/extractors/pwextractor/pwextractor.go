@@ -10,6 +10,7 @@ import (
 	"github.com/playwright-community/playwright-go"
 	"maps"
 	"net"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -33,6 +34,8 @@ type PwExtractor struct {
 	cookieManager CookieManager
 	limiter       limiter.Limiter
 	proxyIP       net.IP
+	allowed       int
+	blocked       int
 }
 
 type Config struct {
@@ -99,6 +102,11 @@ const MAX_RETRIES = 3 // todo: config
 
 func (e *PwExtractor) visitPage(task models.Task, cb func(page playwright.Page) error) (errRet error) {
 
+	taskUrl, err := url.Parse(task.URL)
+	if err != nil {
+		return fmt.Errorf("parse task url: %w", err)
+	}
+
 	baseDomain, scheme, err := parseBaseDomain(task.URL)
 	if err != nil {
 		return fmt.Errorf("parse base domain: %w", err)
@@ -145,7 +153,7 @@ func (e *PwExtractor) visitPage(task models.Task, cb func(page playwright.Page) 
 		}
 	}()
 
-	if err := e.setupInterceptors(bCtx); err != nil {
+	if err := e.setupInterceptors(bCtx, taskUrl); err != nil {
 		return fmt.Errorf("setup interceptors: %w", err)
 	}
 
@@ -197,7 +205,13 @@ func (e *PwExtractor) visitPage(task models.Task, cb func(page playwright.Page) 
 
 	start := time.Now()
 	err = cb(page)
-	log.Infof("Visiting page %s finished, time=%f secs, err=%v", task.URL, time.Since(start).Seconds(), err)
+	log.Infof(
+		"Visiting page %s finished, time=%f secs, allowed hosts=%d, blocked hosts=%d, err=%v",
+		task.URL,
+		time.Since(start).Seconds(),
+		e.allowed, e.blocked,
+		err,
+	)
 
 	if len(cookies) > 0 {
 		bCookies, err := bCtx.Cookies(fmt.Sprintf("%s://%s", scheme, baseDomain))
@@ -218,7 +232,7 @@ func (e *PwExtractor) visitPage(task models.Task, cb func(page playwright.Page) 
 	return err
 }
 
-func (e *PwExtractor) setupInterceptors(bCtx playwright.BrowserContext) error {
+func (e *PwExtractor) setupInterceptors(bCtx playwright.BrowserContext, sourceUrl *url.URL) error {
 	if err := bCtx.Route("**", func(route playwright.Route) {
 		log.Debugf("Route: %s", route.Request().URL())
 		allowHost, err := e.allowHost(route.Request().URL())
@@ -226,11 +240,19 @@ func (e *PwExtractor) setupInterceptors(bCtx playwright.BrowserContext) error {
 			log.Errorf("Allow host: %v", err)
 			allowHost = false
 		}
+		URL, err := url.Parse(route.Request().URL())
+		if err != nil {
+			log.Errorf("Interceptor parse url: %v", err)
+			allowHost = false
+		}
+		allowHost = allowHost && allowAdblock(URL, sourceUrl)
 		if allowHost {
+			e.allowed++
 			if err := route.Continue(); err != nil {
 				log.Warnf("Route continue error: %v", err)
 			}
 		} else {
+			e.blocked++
 			if err := route.Abort(); err != nil {
 				log.Warnf("Route abort error: %v", err)
 			}
@@ -246,11 +268,19 @@ func (e *PwExtractor) setupInterceptors(bCtx playwright.BrowserContext) error {
 			log.Errorf("Allow host: %v", err)
 			allowHost = false
 		}
+		URL, err := url.Parse(route.URL())
+		if err != nil {
+			log.Errorf("Interceptor websocket parse url: %v", err)
+			allowHost = false
+		}
+		allowHost = allowHost && allowAdblock(URL, sourceUrl)
 		if allowHost {
+			e.allowed++
 			if _, err := route.ConnectToServer(); err != nil {
 				log.Warnf("Websocket connect error: %v", err)
 			}
 		} else {
+			e.blocked++
 			route.Close()
 		}
 	}); err != nil {
