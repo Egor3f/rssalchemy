@@ -20,7 +20,7 @@ rssalchemy:0:nVDNasMwDH4Vo1MLTbLs6ENfpSiK2nhVLGMrHWXs3UvwxYPtspv4/vRJX7BlAQ+LWSp
 rssalchemy:0:XY/RasMwDEV/pWgvG1QJ26N/pij2TWNqW8FWCqHs30daGN4epXMlHT1oq4kcLWZrc+O462bbhMFrHmcgjG2bmq9xtail0ZkaErxpvazajByFeB92C1yjXzgaMleUgIrahy1aAjl6u8cA5VfZ8RTLjRxJz/nZ7EIBvybkqCey2aK1s/GLlILERTJO0kd9hRjC4ZJhEsTkOIRTW6U8Z18KB+Qpqb+5YgvrzLaveP/6+LNMi6HYPxsUn7Rt9Xg45uuwG3ut4JjlCuakEhDoTF78gkuKMyzmI/yZ6fsH
 ```
 
-#### reddit.com
+#### reddit.com r/selfhosted
 ```
 rssalchemy:1:dcyxCsIwEADQQUFwEHRw6FidhPTUsdAfcHQtFUJzaY8mJlyujZ8vuLu+4W3Po0hMNUDOuWI0hqTqgweGhM6OIQkaOGw0C/UOi6NukwvS2Nk5FUMS5eg9deUfvxSGlsoiGtVrNkrwIyoyLoT5vtftyGhfTQlzQoayq9dCHh878sPpl5DXAz5Xt6v/Ag
 ```
