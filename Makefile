@@ -14,3 +14,7 @@ go_proto:
 	protoc -I=. -I=${PROTOBUF_TAGGER_PATH} --gotag_out=. ./proto/specs.proto
 
 proto: js_proto go_proto
+
+update_adblock:
+	wget -O internal/extractors/pwextractor/blocklists/easylist.txt https://easylist.to/easylist/easylist.txt
+	wget -O internal/extractors/pwextractor/blocklists/easyprivacy.txt https://easylist.to/easylist/easyprivacy.txt

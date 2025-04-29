@@ -12,6 +12,7 @@
 - Cookies[^1] (supports scraping private feeds, eg youtube subscriptions)
 - Proxy
 - Results caching
+- Adblock (primarily for loading speedup)
 - Screenshots (primarily for debugging)
 - [Presets](presets) for sharing configurations
 - Stateless[^2] (all task parameters are encoded into url, no database needed)
