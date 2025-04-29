@@ -38,13 +38,11 @@ youtube
 | Hosting              | Self-hosting              | Self-hosting                 | Self-hosting            | Only cloud    |
 | Price                | Free and open-source      | Free and open-source         | Free and open-source    | Paid ($8/mon) |
 
-## Project status
-
-Program is still under development. The code architecture is not final, no CI, etc...
 
 ## Demo instance
 
 [rssalchemy.efprojects.com](https://rssalchemy.efprojects.com)
+
 
 ## Deployment
 
@@ -58,6 +56,7 @@ Then open your browser targeting to port 8080.
 
 For SSL, authentication, domains, etc. - use Caddy or Nginx (no specific configuration required). Personally I recommend Caddy, if you haven't used it before - give it a try :)
 
+
 ### Configuration
 
 Configuration is done using environment variables
@@ -66,9 +65,17 @@ You can see all available options in [config.go file](internal/config/config.go)
 
 Docker-compose deployment uses [deploy/.env file](deploy/.env)
 
+
 ### Scaling
 
 Each worker can process 1 page at a time, so to scale you should run multiple worker instances. This is done using replicas parameter in worker section in [docker-compose.yml file](deploy/docker-compose.yml)
+
+
+### Troubleshooting FAQ
+
+**Q: My RSS software shows timeout error, but rssalchemy logs are ok** <br/>
+A: Increase timeout. For miniflux it's HTTP_CLIENT_TIMEOUT, for other clients - read their documentation <br/>
+
 
 ## Development
 
