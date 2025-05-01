@@ -83,7 +83,7 @@ export const fields = [
     name: 'cache_lifetime',
     input_type: 'text',
     label: 'Cache lifetime (format examples: 10s, 1m, 2h)',
-    default: '1m',
+    default: '10m',
     validate: validateDuration,
   },
 ] as const satisfies Field[];
