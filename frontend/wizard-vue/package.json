@@ -35,7 +35,7 @@
     "prettier": "^3.4.2",
     "sass-embedded": "^1.83.4",
     "typescript": "~5.7.3",
-    "vite": "^6.0.11",
+    "vite": "^6.3.5",
     "vite-plugin-vue-devtools": "^7.7.0",
     "vue-tsc": "^2.2.0"
   }
