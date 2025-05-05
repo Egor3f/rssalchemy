@@ -5,6 +5,7 @@ go 1.23.2
 toolchain go1.24.0
 
 require (
+	github.com/AdguardTeam/urlfilter v0.20.0
 	github.com/ericchiang/css v1.4.0
 	github.com/felixge/fgprof v0.9.5
 	github.com/go-playground/validator/v10 v10.23.0
@@ -18,7 +19,7 @@ require (
 	github.com/mennanov/limiters v1.11.0
 	github.com/nats-io/nats.go v1.38.0
 	github.com/playwright-community/playwright-go v0.5001.0
-	github.com/redis/go-redis/v9 v9.7.0
+	github.com/redis/go-redis/v9 v9.7.3
 	github.com/srikrsna/protoc-gen-gotag v1.0.2
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/time v0.8.0
@@ -27,7 +28,6 @@ require (
 
 require (
 	github.com/AdguardTeam/golibs v0.29.0 // indirect
-	github.com/AdguardTeam/urlfilter v0.20.0 // indirect
 	github.com/BurntSushi/toml v1.2.1 // indirect
 	github.com/alessandro-c/gomemcached-lock v1.0.0 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
