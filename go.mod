@@ -5,6 +5,7 @@ go 1.23.2
 toolchain go1.24.0
 
 require (
+	github.com/AdguardTeam/urlfilter v0.20.0
 	github.com/ericchiang/css v1.4.0
 	github.com/felixge/fgprof v0.9.5
 	github.com/go-playground/validator/v10 v10.23.0
@@ -27,7 +28,6 @@ require (
 
 require (
 	github.com/AdguardTeam/golibs v0.29.0 // indirect
-	github.com/AdguardTeam/urlfilter v0.20.0 // indirect
 	github.com/BurntSushi/toml v1.2.1 // indirect
 	github.com/alessandro-c/gomemcached-lock v1.0.0 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
@@ -51,7 +51,7 @@ require (
 	github.com/elliotchance/pie/v2 v2.7.0 // indirect
 	github.com/fatih/color v1.16.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
-	github.com/go-jose/go-jose/v3 v3.0.3 // indirect
+	github.com/go-jose/go-jose/v3 v3.0.4 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect
