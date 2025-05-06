@@ -5,6 +5,10 @@
  * git: https://github.com/thesayyn/protoc-gen-ts */
 import * as pb_1 from "google-protobuf";
 export namespace rssalchemy {
+    export enum ExtractFrom {
+        InnerText = 0,
+        Attribute = 1
+    }
     export class Specs extends pb_1.Message {
         #one_of_decls: number[][] = [];
         constructor(data?: any[] | {
@@ -15,6 +19,7 @@ export namespace rssalchemy {
             selector_description?: string;
             selector_author?: string;
             selector_created?: string;
+            created_extract_from?: ExtractFrom;
             selector_content?: string;
             selector_enclosure?: string;
             cache_lifetime?: string;
@@ -42,6 +47,9 @@ export namespace rssalchemy {
                 }
                 if ("selector_created" in data && data.selector_created != undefined) {
                     this.selector_created = data.selector_created;
+                }
+                if ("created_extract_from" in data && data.created_extract_from != undefined) {
+                    this.created_extract_from = data.created_extract_from;
                 }
                 if ("selector_content" in data && data.selector_content != undefined) {
                     this.selector_content = data.selector_content;
@@ -96,6 +104,12 @@ export namespace rssalchemy {
         set selector_created(value: string) {
             pb_1.Message.setField(this, 7, value);
         }
+        get created_extract_from() {
+            return pb_1.Message.getFieldWithDefault(this, 11, ExtractFrom.InnerText) as ExtractFrom;
+        }
+        set created_extract_from(value: ExtractFrom) {
+            pb_1.Message.setField(this, 11, value);
+        }
         get selector_content() {
             return pb_1.Message.getFieldWithDefault(this, 8, "") as string;
         }
@@ -122,6 +136,7 @@ export namespace rssalchemy {
             selector_description?: string;
             selector_author?: string;
             selector_created?: string;
+            created_extract_from?: ExtractFrom;
             selector_content?: string;
             selector_enclosure?: string;
             cache_lifetime?: string;
@@ -148,6 +163,9 @@ export namespace rssalchemy {
             if (data.selector_created != null) {
                 message.selector_created = data.selector_created;
             }
+            if (data.created_extract_from != null) {
+                message.created_extract_from = data.created_extract_from;
+            }
             if (data.selector_content != null) {
                 message.selector_content = data.selector_content;
             }
@@ -168,6 +186,7 @@ export namespace rssalchemy {
                 selector_description?: string;
                 selector_author?: string;
                 selector_created?: string;
+                created_extract_from?: ExtractFrom;
                 selector_content?: string;
                 selector_enclosure?: string;
                 cache_lifetime?: string;
@@ -192,6 +211,9 @@ export namespace rssalchemy {
             }
             if (this.selector_created != null) {
                 data.selector_created = this.selector_created;
+            }
+            if (this.created_extract_from != null) {
+                data.created_extract_from = this.created_extract_from;
             }
             if (this.selector_content != null) {
                 data.selector_content = this.selector_content;
@@ -222,6 +244,8 @@ export namespace rssalchemy {
                 writer.writeString(6, this.selector_author);
             if (this.selector_created.length)
                 writer.writeString(7, this.selector_created);
+            if (this.created_extract_from != ExtractFrom.InnerText)
+                writer.writeEnum(11, this.created_extract_from);
             if (this.selector_content.length)
                 writer.writeString(8, this.selector_content);
             if (this.selector_enclosure.length)
@@ -257,6 +281,9 @@ export namespace rssalchemy {
                         break;
                     case 7:
                         message.selector_created = reader.readString();
+                        break;
+                    case 11:
+                        message.created_extract_from = reader.readEnum();
                         break;
                     case 8:
                         message.selector_content = reader.readString();

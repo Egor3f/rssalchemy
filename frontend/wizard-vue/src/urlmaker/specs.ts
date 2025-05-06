@@ -81,6 +81,16 @@ export const fields: SpecField[] = [
     validate: validateSelector,
     group: 'created',
   },
+  {
+    name: 'created_extract_from',
+    input_type: InputType.Radio,
+    enum_values: rssalchemy.ExtractFrom,
+    label: 'Extract from',
+    default: rssalchemy.ExtractFrom.InnerText,
+    validate: value => Object.values(rssalchemy.ExtractFrom).includes(value),
+    group: 'created',
+    show_if: specs => !!specs.selector_created,
+  },
 
   {
     name: 'selector_content',
