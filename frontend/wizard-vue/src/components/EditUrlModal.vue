@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import TextField from "@/components/TextField.vue";
+import TextField from "@/components/inputs/TextField.vue";
 import Btn from "@/components/Btn.vue";
 import {onMounted, onUnmounted, ref, watch} from "vue";
 import Modal from "@/components/Modal.vue";

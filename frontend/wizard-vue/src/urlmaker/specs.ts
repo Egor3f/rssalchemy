@@ -6,6 +6,7 @@ import {
   type validator
 } from "@/urlmaker/validators.ts";
 import {rssalchemy} from "@/urlmaker/proto/specs.ts";
+import type {Enum} from "@/common/enum.ts";
 
 export type SpecKey = ReturnType<rssalchemy.Specs['toObject']>;
 export type SpecValue = string | number;
@@ -16,12 +17,6 @@ export enum InputType {
   Text = 'text',
   Radio = 'radio'
 }
-
-export type EnumValue = {
-  label: string
-  value: number
-}
-export type Enum = EnumValue[]
 
 export interface SpecField {
   name: keyof Specs

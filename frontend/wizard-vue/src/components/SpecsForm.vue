@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {fields, InputType, type SpecField} from '@/urlmaker/specs.ts';
-import TextField from "@/components/TextField.vue";
-import RadioButtons from "@/components/RadioButtons.vue";
+import TextField from "@/components/inputs/TextField.vue";
+import RadioButtons from "@/components/inputs/RadioButtons.vue";
 import {useWizardStore} from "@/stores/wizard.ts";
 
 const store = useWizardStore();

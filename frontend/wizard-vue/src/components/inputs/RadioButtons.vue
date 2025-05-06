@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {getCurrentInstance} from "vue";
-import type {Enum} from "@/urlmaker/specs.ts";
+
+import type {Enum} from "@/common/enum.ts";
 
 const {name, label, values} = defineProps<{
   name: string
