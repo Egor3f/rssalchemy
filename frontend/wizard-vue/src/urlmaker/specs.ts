@@ -8,9 +8,23 @@ import {
 import {rssalchemy} from "@/urlmaker/proto/specs.ts";
 import type {Enum} from "@/common/enum.ts";
 
-export type SpecKey = ReturnType<rssalchemy.Specs['toObject']>;
+export const defaultSpecs = {
+  url: '',
+  selector_post: '',
+  selector_title: '',
+  selector_link: '',
+  selector_description: '',
+  selector_author: '',
+  selector_content: '',
+  selector_enclosure: '',
+  selector_created: '',
+  created_extract_from: rssalchemy.ExtractFrom.InnerText,
+  created_attribute_name: '',
+  cache_lifetime: '10m'
+};
+
 export type SpecValue = string | number;
-export type Specs = {[k in keyof SpecKey]: SpecValue};
+export type Specs = typeof defaultSpecs;
 
 export enum InputType {
   Url = 'url',
@@ -23,7 +37,6 @@ export interface SpecField {
   input_type: InputType
   enum?: Enum,
   label: string
-  default: SpecValue
   validate: validator
   required?: boolean
   group?: string
@@ -35,7 +48,6 @@ export const fields: SpecField[] = [
     name: 'url',
     input_type: InputType.Url,
     label: 'URL of page for converting',
-    default: '',
     validate: validateUrl,
     required: true,
   },
@@ -43,35 +55,30 @@ export const fields: SpecField[] = [
     name: 'selector_post',
     input_type: InputType.Text,
     label: 'CSS Selector for post',
-    default: '',
     validate: validateSelector,
   },
   {
     name: 'selector_title',
     input_type: InputType.Text,
     label: 'CSS Selector for title',
-    default: '',
     validate: validateSelector,
   },
   {
     name: 'selector_link',
     input_type: InputType.Text,
     label: 'CSS Selector for link',
-    default: '',
     validate: validateSelector,
   },
   {
     name: 'selector_description',
     input_type: InputType.Text,
     label: 'CSS Selector for description',
-    default: '',
     validate: validateSelector,
   },
   {
     name: 'selector_author',
     input_type: InputType.Text,
     label: 'CSS Selector for author',
-    default: '',
     validate: validateSelector,
   },
 
@@ -79,7 +86,6 @@ export const fields: SpecField[] = [
     name: 'selector_created',
     input_type: InputType.Text,
     label: 'CSS Selector for created date',
-    default: '',
     validate: validateSelector,
     group: 'created',
   },
@@ -91,7 +97,6 @@ export const fields: SpecField[] = [
       {label: 'Attribute', value: rssalchemy.ExtractFrom.Attribute},
     ],
     label: 'Extract from',
-    default: rssalchemy.ExtractFrom.InnerText,
     validate: value => Object.values(rssalchemy.ExtractFrom).includes(value),
     group: 'created',
     show_if: specs => !!specs.selector_created,
@@ -100,7 +105,6 @@ export const fields: SpecField[] = [
     name: 'created_attribute_name',
     input_type: InputType.Text,
     label: 'Attribute name',
-    default: '',
     validate: validateAttribute,
     show_if: specs =>
       !!specs.selector_created && specs.created_extract_from === rssalchemy.ExtractFrom.Attribute,
@@ -111,26 +115,18 @@ export const fields: SpecField[] = [
     name: 'selector_content',
     input_type: InputType.Text,
     label: 'CSS Selector for content',
-    default: '',
     validate: validateSelector,
   },
   {
     name: 'selector_enclosure',
     input_type: InputType.Text,
     label: 'CSS Selector for enclosure (e.g. image url)',
-    default: '',
     validate: validateSelector,
   },
   {
     name: 'cache_lifetime',
     input_type: InputType.Text,
     label: 'Cache lifetime (format examples: 10s, 1m, 2h)',
-    default: '10m',
     validate: validateDuration,
   },
 ];
-
-export const defaultSpecs = fields.reduce((o, f) => {
-  o[f.name] = f.default;
-  return o
-}, {} as Specs);
