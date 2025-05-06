@@ -1,54 +1,31 @@
 import {presetPrefix} from "@/urlmaker/index.ts";
+import type {SpecValue} from "@/urlmaker/specs.ts";
 
-type validResult = { ok: boolean, error?: string };
-export type validator = (v: string) => validResult
+export type validator = (v: SpecValue) => boolean;
 
-export function validateUrl(s: string): validResult {
+export function validateUrl(s: SpecValue): boolean {
   let url;
   try {
-    url = new URL(s);
-    return {
-      ok: url.protocol === "http:" || url.protocol === "https:",
-      error: 'Invalid URL protocol',
-    };
+    url = new URL(s as string);
+    return url.protocol === "http:" || url.protocol === "https:"
   } catch {
-    return {ok: false, error: 'Invalid URL'};
+    return false;
   }
 }
 
-export function validatePreset(s: string): validResult {
-  if(!s.startsWith(presetPrefix)) {
-    return {
-      ok: false,
-      error: 'Not a preset'
-    }
-  }
-  return {ok: true}
+export function validatePreset(s: SpecValue): boolean {
+  return (s as string).startsWith(presetPrefix);
 }
 
-export function validateOr(...validators: validator[]): validator {
-  return function(s: string): validResult {
-    return validators.reduce<validResult>((res, v) => {
-      let r = v(s);
-      if(r.ok) res.ok = true;
-      else res.error += r.error + '; ';
-      return res;
-    }, {ok: false, error: ''});
-  }
-}
-
-export function validateSelector(s: string): validResult {
+export function validateSelector(s: SpecValue): boolean {
   try {
-    document.createDocumentFragment().querySelector(s);
-    return {ok: true}
+    document.createDocumentFragment().querySelector(s as string);
+    return true;
   } catch {
-    return {ok: false, error: 'Invalid selector'};
+    return false;
   }
 }
 
-export function validateDuration(s: string): validResult {
-  return {
-    ok: /^\d+[smh]$/.test(s),
-    error: 'Duration must be number and unit (s/m/h), example: 5s = 5 seconds'
-  }
+export function validateDuration(s: SpecValue): boolean {
+  return /^\d+[smh]$/.test(s as string);
 }

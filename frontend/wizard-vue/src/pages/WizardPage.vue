@@ -19,8 +19,8 @@ watch(existingLink, async (value) => {
   if(!value) return;
   existingLink.value = "";
   try {
-    if(validateUrl(value).ok) store.updateSpecs(await decodeUrl(value));
-    else if (validatePreset(value).ok) store.updateSpecs(await decodePreset(value));
+    if(validateUrl(value)) store.updateSpecs(await decodeUrl(value));
+    else if (validatePreset(value)) store.updateSpecs(await decodePreset(value));
   } catch (e) {
     console.log(e);
     alert(`Decoding error: ${e}`);
@@ -60,7 +60,6 @@ function screenshot() {
 <template>
   <div class="wrapper">
     <SpecsForm class="specs-form"></SpecsForm>
-<!--    <Btn :active="store.formValid" @click="generateLink">Generate link</Btn>-->
     <Btn :active="store.formValid" @click="screenshot">Screenshot</Btn>
     <Btn @click="editModalVisible = true">Edit existing task / import preset</Btn>
     <Btn @click="store.reset">Reset Form</Btn>

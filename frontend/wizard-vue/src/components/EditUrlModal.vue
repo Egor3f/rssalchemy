@@ -1,20 +1,10 @@
 <script setup lang="ts">
 
-import Field from "@/components/Field.vue";
-import {type Field as FieldSpec} from "@/urlmaker/specs";
-import {validateOr, validatePreset, validateUrl} from "@/urlmaker/validators.ts";
+import TextField from "@/components/TextField.vue";
 import Btn from "@/components/Btn.vue";
 import {onMounted, onUnmounted, ref, watch} from "vue";
 import Modal from "@/components/Modal.vue";
-
-const field: FieldSpec = {
-  name: '',
-  input_type: 'url',
-  label: 'URL of feed or preset',
-  default: '',
-  required: true,
-  validate: validateOr(validateUrl, validatePreset),
-}
+import {validatePreset, validateUrl} from "@/urlmaker/validators.ts";
 
 const visible = defineModel('visible', {
   type: Boolean,
@@ -33,11 +23,10 @@ watch(visible, () => {
 
 const valid = ref(false);
 watch(url, (value) => {
-  valid.value = field.validate(value).ok;
+  valid.value = validateUrl(value) || validatePreset(value);
 });
 
 const accept = () => {
-  valid.value = field.validate(url.value).ok;
   if (valid.value) {
     emit('update:modelValue', url.value);
     emit('update:visible', false);
@@ -59,7 +48,13 @@ onUnmounted(() => {
 
 <template>
   <Modal v-model="visible">
-    <Field :field="field" v-model="url" :focused="true"/>
+    <TextField
+      name="url"
+      input_type="url"
+      label="URL of feed or preset"
+      v-model="url"
+      :focused="true"
+    />
     <Btn :active="valid" @click="accept">Edit</Btn>
   </Modal>
 </template>

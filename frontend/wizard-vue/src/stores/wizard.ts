@@ -1,5 +1,5 @@
 import {defineStore} from "pinia";
-import {emptySpecs, type Field, type FieldNames, fields, type Specs} from "@/urlmaker/specs.ts";
+import {emptySpecs, type SpecField, fields, type Specs} from "@/urlmaker/specs.ts";
 import {computed, reactive} from "vue";
 import {debounce} from "es-toolkit";
 
@@ -14,7 +14,7 @@ export const useWizardStore = defineStore('wizard', () => {
 
   const formValid = computed(() => {
     return fields.every(field => (
-      specs[field.name].length === 0 && !(field as Field).required || field.validate(specs[field.name]).ok
+      !specs[field.name] && !(field as SpecField).required || field.validate(specs[field.name]!)
     ));
   });
 
@@ -22,7 +22,7 @@ export const useWizardStore = defineStore('wizard', () => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(specs));
   }, 100);
 
-  function updateSpec(fieldName: FieldNames, newValue: string) {
+  function updateSpec(fieldName: keyof Specs, newValue: string) {
     specs[fieldName] = newValue;
     updateLocalStorage();
   }
