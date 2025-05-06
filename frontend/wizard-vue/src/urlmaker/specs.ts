@@ -107,7 +107,8 @@ export const fields: SpecField[] = [
     label: 'Attribute name',
     default: '',
     validate: validateAttribute,
-    show_if: specs => specs.created_extract_from === rssalchemy.ExtractFrom.Attribute,
+    show_if: specs =>
+      !!specs.selector_created && specs.created_extract_from === rssalchemy.ExtractFrom.Attribute,
     group: 'created',
   },
 
