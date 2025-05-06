@@ -114,7 +114,15 @@ func (p *pageParser) extractPost(post playwright.Locator) (models.FeedItem, erro
 
 	item.Enclosure = newLocator(post, p.task.SelectorEnclosure).First().GetAttribute("src")
 
-	createdDateStr := newLocator(post, p.task.SelectorCreated).First().InnerText()
+	var createdDateStr string
+	switch p.task.CreatedExtractFrom {
+	case models.ExtractFrom_InnerText:
+		createdDateStr = newLocator(post, p.task.SelectorCreated).First().InnerText()
+	case models.ExtractFrom_Attribute:
+		createdDateStr = newLocator(post, p.task.SelectorCreated).First().GetAttribute(p.task.CreatedAttributeName)
+	default:
+		return models.FeedItem{}, fmt.Errorf("invalid task.CreatedExtractFrom")
+	}
 	log.Debugf("date=%s", createdDateStr)
 	createdDate, err := p.dateParser.ParseDate(createdDateStr)
 	if err != nil {

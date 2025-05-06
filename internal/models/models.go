@@ -13,19 +13,28 @@ const (
 	TaskTypePageScreenshot = "page_screenshot"
 )
 
+type ExtractFrom int
+
+const (
+	ExtractFrom_InnerText ExtractFrom = 0
+	ExtractFrom_Attribute ExtractFrom = 1
+)
+
 type Task struct {
 	// While adding new fields, dont forget to alter caching func
-	TaskType            TaskType
-	URL                 string
-	SelectorPost        string
-	SelectorTitle       string
-	SelectorLink        string
-	SelectorDescription string
-	SelectorAuthor      string
-	SelectorCreated     string
-	SelectorContent     string
-	SelectorEnclosure   string
-	Headers             map[string]string
+	TaskType             TaskType
+	URL                  string
+	SelectorPost         string
+	SelectorTitle        string
+	SelectorLink         string
+	SelectorDescription  string
+	SelectorAuthor       string
+	SelectorCreated      string
+	CreatedExtractFrom   ExtractFrom
+	CreatedAttributeName string
+	SelectorContent      string
+	SelectorEnclosure    string
+	Headers              map[string]string
 }
 
 func (t Task) CacheKey() string {
