@@ -1,5 +1,5 @@
 import {defineStore} from "pinia";
-import {emptySpecs, type SpecField, fields, type Specs, type SpecValue} from "@/urlmaker/specs.ts";
+import {defaultSpecs, type SpecField, fields, type Specs, type SpecValue} from "@/urlmaker/specs.ts";
 import {computed, reactive} from "vue";
 import {debounce} from "es-toolkit";
 
@@ -8,7 +8,7 @@ const LOCAL_STORAGE_KEY = 'rssalchemy_store_wizard';
 export const useWizardStore = defineStore('wizard', () => {
 
   const locStorageContent = localStorage.getItem(LOCAL_STORAGE_KEY);
-  const initialSpecs = locStorageContent ? JSON.parse(locStorageContent) as Specs : emptySpecs;
+  const initialSpecs = locStorageContent ? JSON.parse(locStorageContent) as Specs : defaultSpecs;
 
   const specs = reactive(Object.assign({}, initialSpecs));
 
@@ -23,7 +23,7 @@ export const useWizardStore = defineStore('wizard', () => {
   }, 100);
 
   function updateSpec(fieldName: keyof Specs, newValue: SpecValue) {
-    specs[fieldName] = newValue;
+    (specs as Record<keyof Specs, SpecValue>)[fieldName] = newValue;
     updateLocalStorage();
   }
   function updateSpecs(newValue: Specs) {
@@ -31,7 +31,7 @@ export const useWizardStore = defineStore('wizard', () => {
     updateLocalStorage();
   }
   function reset() {
-    Object.assign(specs, emptySpecs);
+    Object.assign(specs, defaultSpecs);
     updateLocalStorage();
   }
 
