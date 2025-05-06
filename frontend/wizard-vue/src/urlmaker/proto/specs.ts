@@ -20,6 +20,7 @@ export namespace rssalchemy {
             selector_author?: string;
             selector_created?: string;
             created_extract_from?: ExtractFrom;
+            created_attribute_name?: string;
             selector_content?: string;
             selector_enclosure?: string;
             cache_lifetime?: string;
@@ -50,6 +51,9 @@ export namespace rssalchemy {
                 }
                 if ("created_extract_from" in data && data.created_extract_from != undefined) {
                     this.created_extract_from = data.created_extract_from;
+                }
+                if ("created_attribute_name" in data && data.created_attribute_name != undefined) {
+                    this.created_attribute_name = data.created_attribute_name;
                 }
                 if ("selector_content" in data && data.selector_content != undefined) {
                     this.selector_content = data.selector_content;
@@ -110,6 +114,12 @@ export namespace rssalchemy {
         set created_extract_from(value: ExtractFrom) {
             pb_1.Message.setField(this, 11, value);
         }
+        get created_attribute_name() {
+            return pb_1.Message.getFieldWithDefault(this, 12, "") as string;
+        }
+        set created_attribute_name(value: string) {
+            pb_1.Message.setField(this, 12, value);
+        }
         get selector_content() {
             return pb_1.Message.getFieldWithDefault(this, 8, "") as string;
         }
@@ -137,6 +147,7 @@ export namespace rssalchemy {
             selector_author?: string;
             selector_created?: string;
             created_extract_from?: ExtractFrom;
+            created_attribute_name?: string;
             selector_content?: string;
             selector_enclosure?: string;
             cache_lifetime?: string;
@@ -166,6 +177,9 @@ export namespace rssalchemy {
             if (data.created_extract_from != null) {
                 message.created_extract_from = data.created_extract_from;
             }
+            if (data.created_attribute_name != null) {
+                message.created_attribute_name = data.created_attribute_name;
+            }
             if (data.selector_content != null) {
                 message.selector_content = data.selector_content;
             }
@@ -187,6 +201,7 @@ export namespace rssalchemy {
                 selector_author?: string;
                 selector_created?: string;
                 created_extract_from?: ExtractFrom;
+                created_attribute_name?: string;
                 selector_content?: string;
                 selector_enclosure?: string;
                 cache_lifetime?: string;
@@ -214,6 +229,9 @@ export namespace rssalchemy {
             }
             if (this.created_extract_from != null) {
                 data.created_extract_from = this.created_extract_from;
+            }
+            if (this.created_attribute_name != null) {
+                data.created_attribute_name = this.created_attribute_name;
             }
             if (this.selector_content != null) {
                 data.selector_content = this.selector_content;
@@ -246,6 +264,8 @@ export namespace rssalchemy {
                 writer.writeString(7, this.selector_created);
             if (this.created_extract_from != ExtractFrom.InnerText)
                 writer.writeEnum(11, this.created_extract_from);
+            if (this.created_attribute_name.length)
+                writer.writeString(12, this.created_attribute_name);
             if (this.selector_content.length)
                 writer.writeString(8, this.selector_content);
             if (this.selector_enclosure.length)
@@ -284,6 +304,9 @@ export namespace rssalchemy {
                         break;
                     case 11:
                         message.created_extract_from = reader.readEnum();
+                        break;
+                    case 12:
+                        message.created_attribute_name = reader.readString();
                         break;
                     case 8:
                         message.selector_content = reader.readString();

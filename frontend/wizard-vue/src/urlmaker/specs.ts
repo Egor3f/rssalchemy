@@ -1,4 +1,5 @@
 import {
+  validateAttribute,
   validateDuration,
   validateSelector,
   validateUrl,
@@ -16,10 +17,16 @@ export enum InputType {
   Radio = 'radio'
 }
 
+export type EnumValue = {
+  label: string
+  value: number
+}
+export type Enum = EnumValue[]
+
 export interface SpecField {
   name: keyof Specs
   input_type: InputType
-  enum_values?: {[k: number]: string}
+  enum?: Enum,
   label: string
   default: SpecValue
   validate: validator
@@ -84,12 +91,24 @@ export const fields: SpecField[] = [
   {
     name: 'created_extract_from',
     input_type: InputType.Radio,
-    enum_values: rssalchemy.ExtractFrom,
+    enum: [
+      {label: 'Inner Text', value: rssalchemy.ExtractFrom.InnerText},
+      {label: 'Attribute', value: rssalchemy.ExtractFrom.Attribute},
+    ],
     label: 'Extract from',
     default: rssalchemy.ExtractFrom.InnerText,
     validate: value => Object.values(rssalchemy.ExtractFrom).includes(value),
     group: 'created',
     show_if: specs => !!specs.selector_created,
+  },
+  {
+    name: 'created_attribute_name',
+    input_type: InputType.Text,
+    label: 'Attribute name',
+    default: '',
+    validate: validateAttribute,
+    show_if: specs => specs.created_extract_from === rssalchemy.ExtractFrom.Attribute,
+    group: 'created',
   },
 
   {

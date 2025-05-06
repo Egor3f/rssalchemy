@@ -21,6 +21,7 @@ message Specs {
 
   string selector_created = 7 [(tagger.tags) = "json:\"selector_created\" validate:\"selector\""];
   ExtractFrom created_extract_from = 11 [(tagger.tags) = "json:\"created_extract_from\""];
+  string created_attribute_name = 12 [(tagger.tags) = "json:\"created_attribute_name\""];
 
   string selector_content = 8 [(tagger.tags) = "json:\"selector_content\" validate:\"omitempty,selector\""];
   string selector_enclosure = 9 [(tagger.tags) = "json:\"selector_enclosure\" validate:\"selector\""];

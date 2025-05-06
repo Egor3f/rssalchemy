@@ -26,6 +26,10 @@ export function validateSelector(s: SpecValue): boolean {
   }
 }
 
+export function validateAttribute(s: SpecValue): boolean {
+  return /([^\t\n\f \/>"'=]+)/.test(s as string);
+}
+
 export function validateDuration(s: SpecValue): boolean {
   return /^\d+[smh]$/.test(s as string);
 }
