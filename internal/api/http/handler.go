@@ -75,18 +75,28 @@ func (h *Handler) handleRender(c echo.Context) error {
 		return echo.NewHTTPError(400, fmt.Errorf("decode specs: %w", err))
 	}
 
+	extractFrom, ok := map[pb.ExtractFrom]models.ExtractFrom{
+		pb.ExtractFrom_InnerText: models.ExtractFrom_InnerText,
+		pb.ExtractFrom_Attribute: models.ExtractFrom_Attribute,
+	}[specs.CreatedExtractFrom]
+	if !ok {
+		return echo.NewHTTPError(400, "invalid extract from")
+	}
+
 	task := models.Task{
-		TaskType:            models.TaskTypeExtract,
-		URL:                 specs.Url,
-		SelectorPost:        specs.SelectorPost,
-		SelectorTitle:       specs.SelectorTitle,
-		SelectorLink:        specs.SelectorLink,
-		SelectorDescription: specs.SelectorDescription,
-		SelectorAuthor:      specs.SelectorAuthor,
-		SelectorCreated:     specs.SelectorCreated,
-		SelectorContent:     specs.SelectorContent,
-		SelectorEnclosure:   specs.SelectorEnclosure,
-		Headers:             extractHeaders(c),
+		TaskType:             models.TaskTypeExtract,
+		URL:                  specs.Url,
+		SelectorPost:         specs.SelectorPost,
+		SelectorTitle:        specs.SelectorTitle,
+		SelectorLink:         specs.SelectorLink,
+		SelectorDescription:  specs.SelectorDescription,
+		SelectorAuthor:       specs.SelectorAuthor,
+		SelectorCreated:      specs.SelectorCreated,
+		CreatedExtractFrom:   extractFrom,
+		CreatedAttributeName: specs.CreatedAttributeName,
+		SelectorContent:      specs.SelectorContent,
+		SelectorEnclosure:    specs.SelectorEnclosure,
+		Headers:              extractHeaders(c),
 	}
 
 	cacheLifetime, err := time.ParseDuration(specs.CacheLifetime)
