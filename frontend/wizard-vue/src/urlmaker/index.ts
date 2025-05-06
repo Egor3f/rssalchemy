@@ -1,6 +1,6 @@
-import type {Specs} from "@/urlmaker/specs.ts";
+import {type Specs} from "@/urlmaker/specs.ts";
 import {b64decode, b64encode, compress, decompress, decompressString} from "@/urlmaker/utils.ts";
-import {rssalchemy as pb} from '@/urlmaker/proto/specs.ts';
+import {rssalchemy, rssalchemy as pb} from '@/urlmaker/proto/specs.ts';
 
 const apiBase = import.meta.env.VITE_API_BASE || document.location.origin;
 const renderEndpoint = '/api/v1/render/';  // trailing slash
@@ -57,7 +57,7 @@ export async function encodePreset(specs: Specs): Promise<string> {
 }
 
 export async function encodeSpecsPart(specs: Specs): Promise<string> {
-  const pbSpecs = pb.Specs.fromObject(specs);
+  const pbSpecs = pb.Specs.fromObject(specs as ReturnType<rssalchemy.Specs['toObject']>);
   let data = pbSpecs.serializeBinary();
   data = await compress(data);
   const encodedData = b64encode(data);

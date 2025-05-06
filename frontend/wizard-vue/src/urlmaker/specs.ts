@@ -130,7 +130,7 @@ export const fields: SpecField[] = [
   },
 ];
 
-export const emptySpecs = fields.reduce((o, f) => {
+export const defaultSpecs = fields.reduce((o, f) => {
   o[f.name] = f.default;
   return o
 }, {} as Specs);
