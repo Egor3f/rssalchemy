@@ -22,8 +22,8 @@ export const useWizardStore = defineStore('wizard', () => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(specs));
   }, 100);
 
-  function updateSpec(fieldName: keyof Specs, newValue: SpecValue) {
-    (specs as Record<keyof Specs, SpecValue>)[fieldName] = newValue;
+  function updateSpec<K extends keyof Specs>(fieldName: K, newValue: Specs[K]) {
+    specs[fieldName] = newValue;
     updateLocalStorage();
   }
   function updateSpecs(newValue: Specs) {
