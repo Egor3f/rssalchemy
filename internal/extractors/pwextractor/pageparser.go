@@ -103,10 +103,11 @@ func (p *pageParser) extractPost(post playwright.Locator) (models.FeedItem, erro
 		item.Description = newLocator(post, p.task.SelectorDescription).First().InnerText()
 	}
 
-	item.AuthorName = newLocator(post, p.task.SelectorAuthor).First().InnerText()
-
-	item.AuthorLink = newLocator(post, p.task.SelectorAuthor).First().GetAttribute("href")
-	item.AuthorLink = absUrl(item.AuthorLink, page)
+	if len(p.task.SelectorAuthor) > 0 {
+		item.AuthorName = newLocator(post, p.task.SelectorAuthor).First().InnerText()
+		item.AuthorLink = newLocator(post, p.task.SelectorAuthor).First().GetAttribute("href")
+		item.AuthorLink = absUrl(item.AuthorLink, page)
+	}
 
 	if len(p.task.SelectorContent) > 0 {
 		item.Content = p.extractContent(post)

@@ -17,7 +17,7 @@ message Specs {
   string selector_title = 3 [(tagger.tags) = "json:\"selector_title\" validate:\"selector\""];
   string selector_link = 4 [(tagger.tags) = "json:\"selector_link\" validate:\"selector\""];
   string selector_description = 5 [(tagger.tags) = "json:\"selector_description\" validate:\"omitempty,selector\""];
-  string selector_author = 6 [(tagger.tags) = "json:\"selector_author\" validate:\"selector\""];
+  string selector_author = 6 [(tagger.tags) = "json:\"selector_author\" validate:\"omitempty,selector\""];
 
   string selector_created = 7 [(tagger.tags) = "json:\"selector_created\" validate:\"selector\""];
   ExtractFrom created_extract_from = 11 [(tagger.tags) = "json:\"created_extract_from\""];

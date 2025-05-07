@@ -5,6 +5,7 @@ go 1.23.2
 toolchain go1.24.0
 
 require (
+	github.com/AdguardTeam/urlfilter v0.20.0
 	github.com/ericchiang/css v1.4.0
 	github.com/felixge/fgprof v0.9.5
 	github.com/go-playground/validator/v10 v10.23.0
@@ -27,7 +28,6 @@ require (
 
 require (
 	github.com/AdguardTeam/golibs v0.29.0 // indirect
-	github.com/AdguardTeam/urlfilter v0.20.0 // indirect
 	github.com/BurntSushi/toml v1.2.1 // indirect
 	github.com/alessandro-c/gomemcached-lock v1.0.0 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
@@ -112,4 +112,4 @@ require (
 	olympos.io/encoding/edn v0.0.0-20201019073823-d3554ca0b0a3 // indirect
 )
 
-replace github.com/ericchiang/css => github.com/egor3f/css v0.0.0-20250115151140-52c8c51084e5
+replace github.com/ericchiang/css => github.com/egor3f/css v0.0.0-20250507004805-bfefe22b74a4
