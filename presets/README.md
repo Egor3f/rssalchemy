@@ -25,4 +25,9 @@ rssalchemy:0:XY/RasMwDEV/pWgvG1QJ26N/pij2TWNqW8FWCqHs30daGN4epXMlHT1oq4kcLWZrc+O
 rssalchemy:1:dcyxCsIwEADQQUFwEHRw6FidhPTUsdAfcHQtFUJzaY8mJlyujZ8vuLu+4W3Po0hMNUDOuWI0hqTqgweGhM6OIQkaOGw0C/UOi6NukwvS2Nk5FUMS5eg9deUfvxSGlsoiGtVrNkrwIyoyLoT5vtftyGhfTQlzQoayq9dCHh878sPpl5DXAz5Xt6v/Ag
 ```
 
+#### Associated Press (technology)
+```
+rssalchemy:1:ZcuxCsIwEIBhpOAguBQXC4I4CmkUtzyCU3FyPZMjDfRyR+9QfHtHEcf/g3+1G81Eg/cgFV/aRyZvGMfKE+d3u07l2Q+QcZiZuGvHy7ecFZvwsPm3PRy3P6NLqHEuYoVrWAaNLHhfPLoEBk5YDZNLYOisEKoBybUplG/N+UQf
+```
+
 [^1]: To capture cookies, use [this manual](presets/cookies.md)
